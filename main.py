@@ -2,15 +2,16 @@ import pygame
 from pygame import mixer
 
 mixer.init()
-mixer.music.load("Galaxy Collapse.mp3")
+mixer.music.load("src//Galaxy Collapse.mp3")
 mixer.music.set_volume(0.2)
 
 pygame.init()
 fps = 180
 bpm = 270
 screen = pygame.display.set_mode((1280, 720))
-SingleNoteSprite = pygame.image.load("SingleNote.png")
-BarSprite = pygame.image.load("bar.png")
+RedNoteSprite = pygame.image.load("src//RedNote.png")
+PinkNoteSprite = pygame.image.load("src//PinkNote.png")
+BarSprite = pygame.image.load("src//bar.png")
 firstLine = []
 secondLine = []
 thirdLine = []
@@ -22,7 +23,7 @@ ThirdLineX = 340 + 260  # Third Line X Coordinates
 FourthLineX = 340 + 390  # Fourth Line X Coordinates
 
 
-class GUI:
+class dUI:
     pass
 
 
@@ -39,9 +40,15 @@ class Note:
         self.line = line
 
     def DrawOnScreen(self, surface):
-        surface.blit(SingleNoteSprite, (self.x, self.y))
+        # Drawing Red Notes for Line 1 and 4
+        if self.line == 1 or self.line == 4:
+            surface.blit(RedNoteSprite, (self.x, self.y))
+        # Drawing Pink Notes for Line 2 and 3
+        elif self.line == 2 or self.line == 3:
+            surface.blit(PinkNoteSprite, (self.x, self.y))
+        self.DropDown()
 
-    def ChangeY(self):
+    def DropDown(self):
         self.y += 5.65
 
 
@@ -54,12 +61,6 @@ class LongNote(Note):
     def __init__(self, x: int, y: int, line: int, distance: int) -> None:
         super().__init__(x, y, line)
         self.distance = distance
-
-
-def ChangeYforEveryNote():
-    for line in notesList:
-        for note in line:
-            note.ChangeY()
 
 
 def spawn_note(line: int, timing: int) -> None:
@@ -76,7 +77,7 @@ def spawn_note(line: int, timing: int) -> None:
 
 
 def spawn_notes():
-    level = open("res.rg")
+    level = open("src//res.rg")
     lines = level.readlines()
     for i in range(len(lines)):
         lines[i] = lines[i].split(" ")
@@ -159,7 +160,6 @@ def main():
     ]
     while running:
         clock.tick(fps)
-        ChangeYforEveryNote()
         pressedKeys = [None, None, None, None]
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
