@@ -37,6 +37,7 @@ class Note:
     def __init__(self, x: float, y: float, line: int) -> None:
         self.x = x
         self.y = y
+        self.isClickable = False
         self.line = line
 
     def DrawOnScreen(self, surface):
@@ -47,9 +48,16 @@ class Note:
         elif self.line == 2 or self.line == 3:
             surface.blit(PinkNoteSprite, (self.x, self.y))
         self.DropDown()
+        self.UpdateStatus()
 
     def DropDown(self):
         self.y += 5.65
+
+    def UpdateStatus(self):
+        if self.y > 420 and self.y < 620:
+            self.isClickable = True
+        else:
+            self.isClickable = False
 
 
 class SingleNote(Note):
@@ -98,7 +106,10 @@ def update_screen(pressedKeys, ExecuteOnce) -> None:
     if pressedKeys[0] == pygame.K_a:
         if ExecuteOnce[0] == True:
             for note in range(len(notesList[0]) - 1, -1, -1):
-                if notesList[0][note] != None:
+                if (
+                    notesList[0][note] != None
+                    and notesList[0][note].isClickable == True
+                ):
                     notesList[0][note] = None
                     break
             for i in range(0, 4):
@@ -109,7 +120,10 @@ def update_screen(pressedKeys, ExecuteOnce) -> None:
     if pressedKeys[1] == pygame.K_s:
         if ExecuteOnce[1] == True:
             for note in range(len(notesList[1]) - 1, -1, -1):
-                if notesList[1][note] != None:
+                if (
+                    notesList[1][note] != None
+                    and notesList[1][note].isClickable == True
+                ):
                     notesList[1][note] = None
                     break
             for i in range(0, 4):
@@ -120,7 +134,10 @@ def update_screen(pressedKeys, ExecuteOnce) -> None:
     if pressedKeys[2] == pygame.K_k:
         if ExecuteOnce[2] == True:
             for note in range(len(notesList[2]) - 1, -1, -1):
-                if notesList[2][note] != None:
+                if (
+                    notesList[2][note] != None
+                    and notesList[2][note].isClickable == True
+                ):
                     notesList[2][note] = None
                     break
             for i in range(0, 4):
@@ -131,7 +148,10 @@ def update_screen(pressedKeys, ExecuteOnce) -> None:
     if pressedKeys[3] == pygame.K_l:
         if ExecuteOnce[3] == True:
             for note in range(len(notesList[3]) - 1, -1, -1):
-                if notesList[3][note] != None:
+                if (
+                    notesList[3][note] != None
+                    and notesList[3][note].isClickable == True
+                ):
                     notesList[3][note] = None
                     break
             for i in range(0, 4):
