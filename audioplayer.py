@@ -78,4 +78,5 @@ class AudioPlayer:
 
     def update(self):
         """Used to update the playback timer."""
-        self.songPosition = round(time.time() * 1000) - self.elapsedTime
+        self.songPosition = self.mixer.music.get_pos() + 800
+        # self.songPosition = round(time.time() * 1000) - self.elapsedTime

@@ -1,4 +1,5 @@
 import json
+import time
 import pygame as pg
 import os
 from pygame.locals import *
@@ -246,9 +247,10 @@ class Game:
 
         self.imageScaling = 1
         self.pressedKeys = [False, False, False, False]
-        self.map = Map("src/maps/AiAe/")
+        self.map = Map("src/maps/The Lost Dedicated/")
         self.audioPlayer = audioplayer.AudioPlayer(self.map.bpm, self.map.audio)
 
+        self.gamePaused = False
         self.timeToReact = 350
         self.waitBeforePlaying = 1000
         self.startedPlayingSong = False
@@ -262,9 +264,6 @@ class Game:
         self.notesSheet = spritesheet.SpriteSheet(
             os.path.join("sprites", "notes", "notesSheet.png")
         )
-        self.playfield = pg.transform.smoothscale(
-            pg.image.load(os.path.join("sprites", "playfieldBg.png")), (400, 720)
-        )
         self.firstNote = self.notesSheet.get_image(0, 120, 120, 1, BLACK)
         self.secondNote = self.notesSheet.get_image(1, 120, 120, 1, BLACK)
         self.thirdNote = self.notesSheet.get_image(2, 120, 120, 1, BLACK)
@@ -275,18 +274,10 @@ class Game:
         self.font = pg.font.Font(os.path.join("fonts", "Poppins-Bold.ttf"), 45)
         self.background = Background(self.map.background)
         self.other_sprites.add(self.background)
-        self._RedNoteSprite = pg.image.load(
-            os.path.join("sprites", "notes", "RedNote.png")
-        ).convert_alpha()
-        self._PinkNoteSprite = pg.image.load(
-            os.path.join("sprites", "notes", "PinkNote.png")
-        ).convert_alpha()
         self._JudgementCircleSprite = pg.image.load(
             os.path.join("sprites", "ui", "JudgementCircle.png")
         ).convert_alpha()
         # self.BgSprite = self._BgSprite
-        self.RedNoteSprite = self._RedNoteSprite
-        self.PinkNoteSprite = self._PinkNoteSprite
         self.JudgementCircleSprite = self._JudgementCircleSprite
 
     def spawnNotes(self) -> None:
@@ -463,12 +454,6 @@ class Game:
         self.JudgementCircleSprite = pg.transform.smoothscale_by(
             self._JudgementCircleSprite, factor=self.imageScaling
         )
-        self.RedNoteSprite = pg.transform.smoothscale_by(
-            self._RedNoteSprite, factor=self.imageScaling
-        )
-        self.PinkNoteSprite = pg.transform.smoothscale_by(
-            self._PinkNoteSprite, factor=self.imageScaling
-        )
         for note in self.all_notes:
             note.updateimageScaling(self.imageScaling)
 
@@ -491,6 +476,14 @@ class Game:
         """
         if event.type == QUIT:
             self._running = False
+        if event.type == KEYDOWN:
+            if event.key == K_ESCAPE and not self.gamePaused:
+                self.draw_Text("Game paused", self.font, WHITE, 100, 100)
+                self.audioPlayer.mixer.music.pause()
+                self.gamePaused = True
+            else:
+                self.audioPlayer.mixer.music.unpause()
+                self.gamePaused = False
         if event.type == KEYDOWN or event.type == KEYUP:
             self.handleInput(eventType=event.type, key=event.key)
         if event.type == WINDOWRESIZED:
@@ -500,17 +493,19 @@ class Game:
         """Used to perform a game loop."""
         self.waitBeforePlayingSong()
         self.spawnNotes()
-        self.updateNotes()
-        self.audioPlayer.update()
+        if self.gamePaused == False:
+            self.updateNotes()
+            self.audioPlayer.update()
 
     def on_render(self) -> None:
         """Used to perform rendering on screen."""
         self.clock.tick(FPS)
-        # self.other_sprites.draw(self._display_surf)
-        self.drawRectangle()
-        self.drawJudgementBar()
-        self.drawNotes()
-        self.drawText()
+        if not self.gamePaused:
+            self.other_sprites.draw(self._display_surf)
+            self.drawRectangle()
+            self.drawJudgementBar()
+            self.drawNotes()
+            self.drawText()
         pg.display.update()
 
     def on_cleanup(self) -> None:
