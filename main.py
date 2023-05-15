@@ -250,6 +250,8 @@ class Game:
         self.map = Map("src/maps/The Lost Dedicated/")
         self.audioPlayer = audioplayer.AudioPlayer(self.map.bpm, self.map.audio)
 
+        self.menu_text = ["Resume", "Retry", "Quit"]
+        self.selected_option = 0
         self.gamePaused = False
         self.timeToReact = 350
         self.waitBeforePlaying = 1000
@@ -271,7 +273,7 @@ class Game:
         self.judgementBar = pg.image.load(
             os.path.join("sprites", "notes", "barSheet.png")
         )
-        self.font = pg.font.Font(os.path.join("fonts", "Poppins-Bold.ttf"), 45)
+        self.font = pg.font.Font(os.path.join("fonts", "PixeloidSansBold.ttf"), 45)
         self.background = Background(self.map.background)
         self.other_sprites.add(self.background)
         self._JudgementCircleSprite = pg.image.load(
@@ -477,13 +479,31 @@ class Game:
         if event.type == QUIT:
             self._running = False
         if event.type == KEYDOWN:
-            if event.key == K_ESCAPE and not self.gamePaused:
-                self.draw_Text("Game paused", self.font, WHITE, 100, 100)
-                self.audioPlayer.mixer.music.pause()
-                self.gamePaused = True
+            if self.gamePaused:
+                if event.key == K_RETURN and self.selected_option == 0:
+                    self.audioPlayer.mixer.music.unpause()
+                    self.gamePaused = False
+                if event.key == K_RETURN and self.selected_option == 1:
+                    pass
+                if event.key == K_RETURN and self.selected_option == 2:
+                    self._running = False
+                if event.key == K_ESCAPE:
+                    self.audioPlayer.mixer.music.unpause()
+                    self.gamePaused = False
+                if event.key == K_DOWN:
+                    if self.selected_option < 2:
+                        self.selected_option += 1
+                    else:
+                        self.selected_option = 0
+                if event.key == K_UP:
+                    if self.selected_option > 0:
+                        self.selected_option -= 1
+                    else:
+                        self.selected_option = 2
             else:
-                self.audioPlayer.mixer.music.unpause()
-                self.gamePaused = False
+                if event.key == K_ESCAPE:
+                    self.audioPlayer.mixer.music.pause()
+                    self.gamePaused = True
         if event.type == KEYDOWN or event.type == KEYUP:
             self.handleInput(eventType=event.type, key=event.key)
         if event.type == WINDOWRESIZED:
@@ -491,21 +511,110 @@ class Game:
 
     def on_loop(self) -> None:
         """Used to perform a game loop."""
-        self.waitBeforePlayingSong()
+        if not self.gamePaused:
+            self.waitBeforePlayingSong()
         self.spawnNotes()
         if self.gamePaused == False:
             self.updateNotes()
             self.audioPlayer.update()
 
+    def drawTextWithShadow(
+        self,
+        text: str,
+        font: pg.font.Font,
+        text_col: set,
+        shadow_col: set,
+        x: float,
+        y: float,
+        shadow_offset: float,
+    ) -> None:
+        """Used to draw a text with shadow on screen.
+
+        Parameters
+        ----------
+        text : str
+            Text to draw on screen.
+        font : pg.font.Font
+            Pygame font.
+        text_col : set
+            Text colour in RGB.
+        shadow_col : set
+            Shadow colour in RGB.
+        x : float
+            X position of the text.
+        y : float
+            Y position of the text.
+        shadow_offset : float
+            Offset of the shadow.
+        """
+        img = font.render(text, True, shadow_col)
+        self._display_surf.blit(img, (x + shadow_offset, y + shadow_offset))
+        img = font.render(text, True, text_col)
+        self._display_surf.blit(img, (x, y))
+
     def on_render(self) -> None:
         """Used to perform rendering on screen."""
         self.clock.tick(FPS)
-        if not self.gamePaused:
-            self.other_sprites.draw(self._display_surf)
-            self.drawRectangle()
-            self.drawJudgementBar()
-            self.drawNotes()
-            self.drawText()
+        self._display_surf.fill(BLACK)
+        self.other_sprites.draw(self._display_surf)
+        self.drawRectangle()
+        self.drawJudgementBar()
+        self.drawNotes()
+        self.drawText()
+        if self.gamePaused:
+            s = pg.Surface(self.size, pg.SRCALPHA)  # per-pixel alpha
+            s.fill((0, 0, 0, 128))  # notice the alpha value in the color
+            self._display_surf.blit(s, (0, 0))
+            self.drawTextWithShadow(
+                "Game paused",
+                self.font,
+                WHITE,
+                BLACK,
+                self._display_surf.get_width() / 2 - 150,
+                100,
+                4,
+            )
+            if self.selected_option == 0:
+                resume_text = f"> {self.menu_text[0]}"
+            else:
+                resume_text = self.menu_text[0]
+            if self.selected_option == 1:
+                retry_text = f"> {self.menu_text[1]}"
+            else:
+                retry_text = self.menu_text[1]
+
+            if self.selected_option == 2:
+                quit_text = f"> {self.menu_text[2]}"
+            else:
+                quit_text = self.menu_text[2]
+
+            self.drawTextWithShadow(
+                resume_text,
+                self.font,
+                WHITE,
+                BLACK,
+                self._display_surf.get_width() / 2 - 150,
+                220,
+                4,
+            )
+            self.drawTextWithShadow(
+                retry_text,
+                self.font,
+                WHITE,
+                BLACK,
+                self._display_surf.get_width() / 2 - 150,
+                300,
+                4,
+            )
+            self.drawTextWithShadow(
+                quit_text,
+                self.font,
+                WHITE,
+                BLACK,
+                self._display_surf.get_width() / 2 - 150,
+                380,
+                4,
+            )
         pg.display.update()
 
     def on_cleanup(self) -> None:
