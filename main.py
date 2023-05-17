@@ -9,6 +9,7 @@ from pygame.locals import *
 import spritesheet
 import audioplayer
 import converter
+import text
 
 # Colors
 WHITE = (255, 255, 255)
@@ -51,13 +52,22 @@ class Note(pg.sprite.Sprite):
     """
 
     def __init__(
-        self, line: int, display_surf: pg.surface.Surface, imageScaling: float
+        self,
+        line: int,
+        image: pg.surface.Surface,
+        timing: int,
+        display_surf: pg.surface.Surface,
+        imageScaling: float,
     ) -> None:
         """
         Parameters
         ----------
         line : int
             Line number to which the note belongs.
+        image : pg.surface.Surface
+            Image representing a note.
+        timing : int
+            Timing of the note.
         display_surf : pg.surface.Surface
             Display surface.
         imageScaling : float
@@ -65,22 +75,26 @@ class Note(pg.sprite.Sprite):
         """
         pg.sprite.Sprite.__init__(self)
         self._display_surf = display_surf
+        self.image = image
         self.imageScaling = imageScaling
         self.startPosition = 0
         self.perfectHitPosition = (
             self._display_surf.get_height() - 170 * self.imageScaling
         )
-        self.timing = 0
+        self.timing = timing
         self.line = line
-        self.OffsetLeft = self._display_surf.get_width() / 2 - (245 * self.imageScaling)
-        self.MarginBetweenNotes = 132.3 * self.imageScaling
-
+        self.OffsetLeft = self._display_surf.get_width() / 2 - 258
+        self.MarginBetweenNotes = 132 * self.imageScaling
+        self.isClickable = False
         self._x = self.OffsetLeft + (self.line - 1) * self.MarginBetweenNotes
         self.y = -140
 
     def updateimageScaling(self, imageScaling: float):
         """Used to update image scaling."""
         self.imageScaling = imageScaling
+
+    def draw(self, surface: pg.surface.Surface):
+        surface.blit(self.image, (self._x, self.y))
 
 
 class SingleNote(Note):
@@ -247,12 +261,17 @@ class Game:
 
         self.imageScaling = 1
         self.pressedKeys = [False, False, False, False]
-        self.map = Map("src/maps/The Lost Dedicated/")
+        self.map = Map("src/maps/AiAe/")
         self.audioPlayer = audioplayer.AudioPlayer(self.map.bpm, self.map.audio)
 
         self.menu_text = ["Resume", "Retry", "Quit"]
         self.selected_option = 0
+        self.score = 0
+        self.combo = 0
+        self.accuracy = 100.0
+        self.lastGrade = ""
         self.gamePaused = False
+        self.backgroundAlpha = 160
         self.timeToReact = 350
         self.waitBeforePlaying = 1000
         self.startedPlayingSong = False
@@ -300,47 +319,38 @@ class Game:
                     if notes[i] == "1":
                         lines.append(i + 1)
                 for _ in range(len(lines)):
+                    if lines[_] == 1:
+                        image = self.firstNote
+                    elif lines[_] == 2:
+                        image = self.secondNote
+                    elif lines[_] == 3:
+                        image = self.thirdNote
+                    elif lines[_] == 4:
+                        image = self.fourthNote
+                    timing = int(key) - self.timeToReact / 2
                     note = Note(
                         line=lines[_],
+                        image=image,
+                        timing=timing,
                         display_surf=self._display_surf,
                         imageScaling=self.imageScaling,
                     )
-                    note.timing = int(key) - self.timeToReact / 2
                     self.all_notes.add(note)
                 self.map.notes[key] = None
 
     def drawRectangle(self) -> None:
         """Used to draw two rectangles as a playfield."""
-        pg.draw.rect(
-            self._display_surf,
-            WHITE,
-            pg.Rect(
-                self._display_surf.get_width() / 2 - (268 * self.imageScaling),
-                0,
-                558 * self.imageScaling,
-                self._display_surf.get_height(),
-            ),
+        black_surf = pg.Surface((546, self._display_surf.get_height()))
+        black_surf.fill((130, 130, 130))
+        white_surf = pg.Surface((558, self._display_surf.get_height()))
+        white_surf.fill(WHITE)
+        self._display_surf.blit(
+            white_surf,
+            (self._display_surf.get_width() / 2 - white_surf.get_width() / 2, 0),
         )
-
-        pg.draw.rect(
-            self._display_surf,
-            (130, 130, 130),
-            pg.Rect(
-                self._display_surf.get_width() / 2 - (262 * self.imageScaling),
-                0,
-                546 * self.imageScaling,
-                self._display_surf.get_height(),
-            ),
-        )
-        pg.draw.rect(
-            self._display_surf,
-            (100, 100, 100),
-            pg.Rect(
-                self._display_surf.get_width() / 2 - (262 * self.imageScaling),
-                0,
-                546 * self.imageScaling,
-                4,
-            ),
+        self._display_surf.blit(
+            black_surf,
+            (self._display_surf.get_width() / 2 - black_surf.get_width() / 2, 0),
         )
 
     def updateNotes(self):
@@ -354,47 +364,24 @@ class Game:
                 note.startPosition
                 + ((note.startPosition - note.perfectHitPosition) * progress)
             )
-            if note.y >= note.perfectHitPosition:
-                # note.y = note.perfectHitPosition
-                self.audioPlayer.hitSound.play()
+            if progress > 0.7:
+                note.isClickable = True
+            # print(self.audioPlayer.songPosition - note.timing)
+            if progress > 1.3:
+                #     self.audioPlayer.hitSound.play()
+                self.combo = 0
                 note.kill()
-
-    def draw_Text(
-        self, text: str, font: pg.font.Font, text_col: set, x: float, y: float
-    ) -> None:
-        """Used to draw a text on screen.
-
-        Parameters
-        ----------
-        text : str
-            Text to draw on screen.
-        font : pg.font.Font
-            Pygame font.
-        text_col : set
-            Text colour in RGB.
-        x : float
-            X position of the text.
-        y : float
-            Y position of the text.
-        """
-        img = font.render(text, True, text_col)
-        self._display_surf.blit(img, (x, y))
 
     def drawNotes(self) -> None:
         """Used to draw notes on screen."""
         for note in self.all_notes:
-            if note.line == 1:
-                self._display_surf.blit(self.firstNote, (note._x, note.y))
-            elif note.line == 2:
-                self._display_surf.blit(self.secondNote, (note._x, note.y))
-            elif note.line == 3:
-                self._display_surf.blit(self.thirdNote, (note._x, note.y))
-            elif note.line == 4:
-                self._display_surf.blit(self.fourthNote, (note._x, note.y))
+            note.draw(self._display_surf)
 
     def drawJudgementBar(self) -> None:
         """Used to draw a judgement bar on screen."""
-        OffsetLeft = self._display_surf.get_width() / 2 - (245 * self.imageScaling)
+        OffsetLeft = (
+            self._display_surf.get_width() / 2 - self.judgementBar.get_width() / 2
+        )
         self._display_surf.blit(
             self.judgementBar,
             (OffsetLeft, self._display_surf.get_height() - 170 * self.imageScaling),
@@ -405,46 +392,20 @@ class Game:
         self._display_surf.fill(BLACK)
         # self.background.draw(self._display_surf)
 
-    def drawText(self) -> None:
+    def drawFPS(self) -> None:
         """Used to draw FPS counter on screen."""
         FPS = int(self.clock.get_fps())
         if self.lowestFps > FPS and FPS != 0:
             self.lowestFps = FPS
-        self.fps = str(FPS)
-        fps = self.font.render(self.fps, 10, (255, 255, 255))
-        self._display_surf.blit(
-            fps, (self._display_surf.get_width() - fps.get_width(), 50)
+        self.fps = f"fps: {FPS}"
+        fps = text.TextWithShadow(
+            self.fps, font=self.font, text_col=WHITE, shadow_col=BLACK, shadow_offset=4
         )
-
-    def handleInput(self, eventType: pg.event.Event, key: int) -> None:
-        """Used to handle keyboard input of the player.
-
-        Parameters
-        ----------
-        eventType : pg.event.Event
-            Pygame event.
-        key : int
-            Pressed keys.
-        """
-        if eventType == KEYDOWN:
-            self.audioPlayer.hitSound.play()
-            if key == K_a:
-                self.pressedKeys[0] = True
-            if key == K_s:
-                self.pressedKeys[1] = True
-            if key == K_k:
-                self.pressedKeys[2] = True
-            if key == K_l:
-                self.pressedKeys[3] = True
-        elif eventType == KEYUP:
-            if key == K_a:
-                self.pressedKeys[0] = False
-            if key == K_s:
-                self.pressedKeys[1] = False
-            if key == K_k:
-                self.pressedKeys[2] = False
-            if key == K_l:
-                self.pressedKeys[3] = False
+        fps.draw(
+            self._display_surf.get_width() - fps.get_width(),
+            self._display_surf.get_height() - fps.get_height(),
+            self._display_surf,
+        )
 
     def resizeSprites(self) -> None:
         """Used to resize all sprites."""
@@ -467,6 +428,28 @@ class Game:
         ):
             self.audioPlayer.playSong()
             self.startedPlayingSong = True
+
+    def get_grade(self, progress: float) -> str:
+        if progress >= 0.75 and progress < 0.8 or progress > 1.2 and progress <= 1.25:
+            return "Good!"
+        elif progress >= 0.8 and progress < 0.95 or progress > 1.05 and progress <= 1.2:
+            return "Great!"
+        elif progress >= 0.95 and progress <= 1.05:
+            return "Perfect!"
+        else:
+            return "Miss!"
+
+    def add_score(self, progress: float) -> None:
+        if self.combo < 10:
+            score_multiplier = 1
+        else:
+            score_multiplier = int(self.combo * 0.1)
+        if progress >= 0.75 and progress < 0.8 or progress > 1.2 and progress <= 1.25:
+            self.score += 50 * score_multiplier
+        elif progress >= 0.8 and progress < 0.9 or progress > 1.1 and progress <= 1.2:
+            self.score += 100 * score_multiplier
+        elif progress >= 0.95 and progress <= 1.05:
+            self.score += 300 * score_multiplier
 
     def on_event(self, event) -> None:
         """Used to handle pygame events.
@@ -504,8 +487,101 @@ class Game:
                 if event.key == K_ESCAPE:
                     self.audioPlayer.mixer.music.pause()
                     self.gamePaused = True
-        if event.type == KEYDOWN or event.type == KEYUP:
-            self.handleInput(eventType=event.type, key=event.key)
+        if event.type == KEYDOWN:
+            if event.key == K_d and not self.pressedKeys[0]:
+                self.pressedKeys[0] = True
+                for note in self.all_notes:
+                    if note.line == 1 and note.isClickable:
+                        progress = 1 - (
+                            (
+                                note.timing
+                                + self.waitBeforePlaying
+                                - self.audioPlayer.songPosition
+                            )
+                            / self.timeToReact
+                        )
+                        self.add_score(progress=progress)
+                        self.lastGrade = self.get_grade(progress=progress)
+                        if self.lastGrade != "Miss!":
+                            self.combo += 1
+                        else:
+                            self.combo == 0
+                        self.audioPlayer.hitSound.play()
+                        note.kill()
+                        break
+            if event.key == K_f and not self.pressedKeys[1]:
+                self.pressedKeys[1] = True
+                for note in self.all_notes:
+                    if note.line == 2 and note.isClickable:
+                        progress = 1 - (
+                            (
+                                note.timing
+                                + self.waitBeforePlaying
+                                - self.audioPlayer.songPosition
+                            )
+                            / self.timeToReact
+                        )
+                        self.add_score(progress=progress)
+                        self.lastGrade = self.get_grade(progress=progress)
+                        if self.lastGrade != "Miss!":
+                            self.combo += 1
+                        else:
+                            self.combo == 0
+                        self.audioPlayer.hitSound.play()
+                        note.kill()
+                        break
+            if event.key == K_j and not self.pressedKeys[2]:
+                self.pressedKeys[2] = True
+                for note in self.all_notes:
+                    if note.line == 3 and note.isClickable:
+                        progress = 1 - (
+                            (
+                                note.timing
+                                + self.waitBeforePlaying
+                                - self.audioPlayer.songPosition
+                            )
+                            / self.timeToReact
+                        )
+                        self.add_score(progress=progress)
+                        self.lastGrade = self.get_grade(progress=progress)
+                        if self.lastGrade != "Miss!":
+                            self.combo += 1
+                        else:
+                            self.combo == 0
+                        self.audioPlayer.hitSound.play()
+                        note.kill()
+                        break
+            if event.key == K_k and not self.pressedKeys[3]:
+                self.pressedKeys[3] = True
+                for note in self.all_notes:
+                    if note.line == 4 and note.isClickable:
+                        progress = 1 - (
+                            (
+                                note.timing
+                                + self.waitBeforePlaying
+                                - self.audioPlayer.songPosition
+                            )
+                            / self.timeToReact
+                        )
+                        self.add_score(progress=progress)
+                        self.lastGrade = self.get_grade(progress=progress)
+                        if self.lastGrade != "Miss!":
+                            self.combo += 1
+                        else:
+                            self.combo == 0
+                        self.audioPlayer.hitSound.play()
+                        note.kill()
+                        break
+
+        if event.type == KEYUP:
+            if event.key == K_d and self.pressedKeys[0]:
+                self.pressedKeys[0] = False
+            if event.key == K_f and self.pressedKeys[1]:
+                self.pressedKeys[1] = False
+            if event.key == K_j and self.pressedKeys[2]:
+                self.pressedKeys[2] = False
+            if event.key == K_k and self.pressedKeys[3]:
+                self.pressedKeys[3] = False
         if event.type == WINDOWRESIZED:
             self.resizeSprites()
 
@@ -518,61 +594,67 @@ class Game:
             self.updateNotes()
             self.audioPlayer.update()
 
-    def drawTextWithShadow(
-        self,
-        text: str,
-        font: pg.font.Font,
-        text_col: set,
-        shadow_col: set,
-        x: float,
-        y: float,
-        shadow_offset: float,
-    ) -> None:
-        """Used to draw a text with shadow on screen.
-
-        Parameters
-        ----------
-        text : str
-            Text to draw on screen.
-        font : pg.font.Font
-            Pygame font.
-        text_col : set
-            Text colour in RGB.
-        shadow_col : set
-            Shadow colour in RGB.
-        x : float
-            X position of the text.
-        y : float
-            Y position of the text.
-        shadow_offset : float
-            Offset of the shadow.
-        """
-        img = font.render(text, True, shadow_col)
-        self._display_surf.blit(img, (x + shadow_offset, y + shadow_offset))
-        img = font.render(text, True, text_col)
-        self._display_surf.blit(img, (x, y))
-
     def on_render(self) -> None:
         """Used to perform rendering on screen."""
         self.clock.tick(FPS)
         self._display_surf.fill(BLACK)
         self.other_sprites.draw(self._display_surf)
+        s = pg.Surface(self.size, pg.SRCALPHA)  # per-pixel alpha
+        s.fill((0, 0, 0, self.backgroundAlpha))  # notice the alpha value in the color
+        self._display_surf.blit(s, (0, 0))
         self.drawRectangle()
         self.drawJudgementBar()
         self.drawNotes()
-        self.drawText()
+        self.drawFPS()
+        score = text.TextWithShadow(
+            str(self.score),
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        score.draw(
+            self._display_surf.get_width() - score.get_width(), 0, self._display_surf
+        )
+        lastGrade = text.TextWithShadow(
+            self.lastGrade,
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        lastGrade.draw(
+            self._display_surf.get_width() / 2 - lastGrade.get_width() / 2,
+            300,
+            self._display_surf,
+        )
+        combo = text.TextWithShadow(
+            str(self.combo),
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        combo.draw(
+            self._display_surf.get_width() / 2 - combo.get_width() / 2,
+            200,
+            self._display_surf,
+        )
         if self.gamePaused:
             s = pg.Surface(self.size, pg.SRCALPHA)  # per-pixel alpha
             s.fill((0, 0, 0, 128))  # notice the alpha value in the color
             self._display_surf.blit(s, (0, 0))
-            self.drawTextWithShadow(
+            paused_surf = text.TextWithShadow(
                 "Game paused",
                 self.font,
                 WHITE,
                 BLACK,
-                self._display_surf.get_width() / 2 - 150,
-                100,
                 4,
+            )
+            paused_surf.draw(
+                self._display_surf.get_width() / 2 - paused_surf.get_width() / 2,
+                100,
+                self._display_surf,
             )
             if self.selected_option == 0:
                 resume_text = f"> {self.menu_text[0]}"
@@ -588,32 +670,35 @@ class Game:
             else:
                 quit_text = self.menu_text[2]
 
-            self.drawTextWithShadow(
+            resume_surf = text.TextWithShadow(
                 resume_text,
                 self.font,
                 WHITE,
                 BLACK,
-                self._display_surf.get_width() / 2 - 150,
-                220,
                 4,
             )
-            self.drawTextWithShadow(
+            resume_surf.draw(
+                self._display_surf.get_width() / 2 - 150, 220, self._display_surf
+            )
+            retry_surf = text.TextWithShadow(
                 retry_text,
                 self.font,
                 WHITE,
                 BLACK,
-                self._display_surf.get_width() / 2 - 150,
-                300,
                 4,
             )
-            self.drawTextWithShadow(
+            retry_surf.draw(
+                self._display_surf.get_width() / 2 - 150, 300, self._display_surf
+            )
+            quit_surf = text.TextWithShadow(
                 quit_text,
                 self.font,
                 WHITE,
                 BLACK,
-                self._display_surf.get_width() / 2 - 150,
-                380,
                 4,
+            )
+            quit_surf.draw(
+                self._display_surf.get_width() / 2 - 150, 380, self._display_surf
             )
         pg.display.update()
 
