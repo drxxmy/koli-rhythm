@@ -1,5 +1,4 @@
 from pygame import mixer
-import time
 import os
 
 
@@ -34,7 +33,6 @@ class AudioPlayer:
         self.hitSound = self.mixer.Sound(os.path.join("src", "hitsounds", "hit.wav"))
         self.songBpm = songBpm
         self.songPosition = 0
-        self.elapsedTime = round(time.time() * 1000)
         self.songSource = songSource
         self.mixer.music.load(self.songSource)
 
@@ -79,4 +77,3 @@ class AudioPlayer:
     def update(self):
         """Used to update the playback timer."""
         self.songPosition = self.mixer.music.get_pos() + 800
-        # self.songPosition = round(time.time() * 1000) - self.elapsedTime
