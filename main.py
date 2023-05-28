@@ -2,6 +2,7 @@ import json
 import random
 import pygame as pg
 import os
+from enum import Enum
 from pygame.locals import *
 
 
@@ -18,6 +19,24 @@ BLACK = (0, 0, 0)
 
 # Constants
 FPS = 1000
+
+
+class GameState(Enum):
+    in_game = 0
+    main_menu = 1
+    settings_menu = 2
+    paused = 3
+
+
+class Settings:
+    def __init__(self) -> None:
+        self.note_speed = 1.0
+        self.background_dim = 100
+        self.volume = 100
+        self.time_to_react = 400
+
+    def update_time_to_react(self):
+        pass
 
 
 class HitGlow:
@@ -276,15 +295,8 @@ class LongNote(Note):
         self.length = length
 
 
-class InputHandler:
-    def __init__(self) -> None:
-        raise NotImplementedError
-
-
 class Game:
     """The main class that implements the logic of the game.
-
-    !!!! ADD_MORE_INFO_HERE !!!!
 
     Methods
     -------
@@ -336,6 +348,7 @@ class Game:
             Playback volume.
         """
         self._running = True
+        self.settings = Settings()
         self._flags = initializationFlags
         self.size = self.width, self.height = width, height
 
@@ -353,8 +366,22 @@ class Game:
 
         self.audioPlayer = audioplayer.AudioPlayer(self.chart.bpm, self.chart.audio)
 
-        self.menu_text = ["Resume", "Retry", "Quit"]
-        self.main_menu_state = 0
+        self.main_menu_text = ["Play", "Settings", "Quit"]
+        self.main_menu_selected = 0
+
+        self.pause_menu_text = ["Resume", "Retry", "Leave"]
+        self.pause_menu_selected = 0
+
+        self.settings_menu_text = [
+            "Note Speed: ",
+            "Background Dim: ",
+            "Volume: ",
+            "Back",
+        ]
+        self.settings_menu_selected = 0
+
+        self.game_state = GameState.main_menu
+
         self.time_since_game_start = pg.time.get_ticks()
         self.time_since_starting_chart = 0
         self.fps = self.clock.get_fps()
@@ -366,13 +393,12 @@ class Game:
         self.user_interface = UserInterface(
             score=self.score, last_grade=self.lastGrade, combo=self.combo, fps=self.fps
         )
-        self.main_menu = False
-        self.playing = True
-        self.gamePaused = False
+
         self.backgroundAlpha = 160
-        self.timeToReact = 350
+        self.timeToReact = 400
         self.waitBeforePlaying = 1000
         self.startedPlayingSong = False
+
         self.all_notes = pg.sprite.Group()
         self.all_recent_hits = []
         self.all_hit_glows = []
@@ -601,6 +627,329 @@ class Game:
         self.all_notes.empty()
         self.spawn_notes()
 
+    def handle_main_menu(self, event) -> None:
+        if event.type == KEYDOWN:
+            if event.key == K_RETURN and self.main_menu_selected == 0:
+                self.game_state = GameState.in_game
+                self.main_menu_selected = 0
+            if event.key == K_RETURN and self.main_menu_selected == 1:
+                self.game_state = GameState.settings_menu
+                self.main_menu_selected = 0
+            if event.key == K_RETURN and self.main_menu_selected == 2:
+                self._running = False
+            if event.key == K_ESCAPE:
+                self._running = False
+            if event.key == K_DOWN:
+                if self.main_menu_selected < 2:
+                    self.main_menu_selected += 1
+                else:
+                    self.main_menu_selected = 0
+                print(self.main_menu_selected)
+            if event.key == K_UP:
+                if self.main_menu_selected > 0:
+                    self.main_menu_selected -= 1
+                else:
+                    self.main_menu_selected = 2
+                print(self.main_menu_selected)
+
+    def handle_settings_menu(self, event) -> None:
+        if event.type == KEYDOWN:
+            # if event.key == K_RETURN and self.settings_menu_selected == 0:
+            #     pass
+            # if event.key == K_RETURN and self.settings_menu_selected == 1:
+            #     pass
+            # if event.key == K_RETURN and self.settings_menu_selected == 2:
+            #     pass
+            if event.key == K_RETURN and self.settings_menu_selected == 3:
+                self.game_state = GameState.main_menu
+                self.settings_menu_selected = 0
+            if event.key == K_ESCAPE:
+                pass
+            if event.key == K_LEFT and self.settings_menu_selected == 0:
+                if self.settings.note_speed > 0.6:
+                    self.settings.note_speed -= 0.1
+            if event.key == K_RIGHT and self.settings_menu_selected == 0:
+                if self.settings.note_speed < 2:
+                    self.settings.note_speed += 0.1
+
+            if event.key == K_LEFT and self.settings_menu_selected == 1:
+                if self.settings.background_dim > 0:
+                    self.settings.background_dim -= 5
+            if event.key == K_RIGHT and self.settings_menu_selected == 1:
+                if self.settings.background_dim < 100:
+                    self.settings.background_dim += 5
+
+            if event.key == K_LEFT and self.settings_menu_selected == 2:
+                if self.settings.volume > 0:
+                    self.settings.volume -= 5
+            if event.key == K_RIGHT and self.settings_menu_selected == 2:
+                if self.settings.volume < 100:
+                    self.settings.volume += 5
+
+            if event.key == K_DOWN:
+                if self.settings_menu_selected < 3:
+                    self.settings_menu_selected += 1
+                else:
+                    self.settings_menu_selected = 0
+            if event.key == K_UP:
+                if self.settings_menu_selected > 0:
+                    self.settings_menu_selected -= 1
+                else:
+                    self.settings_menu_selected = 3
+
+    def handle_pause_menu(self, event) -> None:
+        if event.type == KEYDOWN:
+            if event.key == K_RETURN and self.pause_menu_selected == 0:
+                self.audioPlayer.mixer.music.unpause()
+                self.game_state = GameState.in_game
+                self.pause_menu_selected = 0
+            if event.key == K_RETURN and self.pause_menu_selected == 1:
+                self.retry()
+            if event.key == K_RETURN and self.pause_menu_selected == 2:
+                self.game_state = GameState.main_menu
+                self.pause_menu_selected = 0
+            if event.key == K_ESCAPE:
+                self.audioPlayer.mixer.music.unpause()
+                self.game_state = GameState.in_game
+                self.pause_menu_selected = 0
+            if event.key == K_DOWN:
+                if self.pause_menu_selected < 2:
+                    self.pause_menu_selected += 1
+                else:
+                    self.pause_menu_selected = 0
+            if event.key == K_UP:
+                if self.pause_menu_selected > 0:
+                    self.pause_menu_selected -= 1
+                else:
+                    self.pause_menu_selected = 2
+
+    def draw_main_menu(self) -> None:
+        self.screen.fill(BLACK)
+        # -- Update text of the buttons -- #
+        if self.main_menu_selected == 0:
+            play_text = f"> {self.main_menu_text[0]} <"
+        else:
+            play_text = self.main_menu_text[0]
+
+        if self.main_menu_selected == 1:
+            settings_text = f"> {self.main_menu_text[1]} <"
+        else:
+            settings_text = self.main_menu_text[1]
+
+        if self.main_menu_selected == 2:
+            quit_text = f"> {self.main_menu_text[2]} <"
+        else:
+            quit_text = self.main_menu_text[2]
+
+        title_surf = text.TextWithShadow(
+            "Koli Rhythm",
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        title_surf.draw(
+            self.screen.get_width() / 2 - title_surf.get_width() / 2,
+            100,
+            self.screen,
+        )
+
+        play_surf = text.TextWithShadow(
+            play_text,
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        play_surf.draw(
+            self.screen.get_width() / 2 - play_surf.get_width() / 2,
+            220,
+            self.screen,
+        )
+        settings_surf = text.TextWithShadow(
+            settings_text,
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        settings_surf.draw(
+            self.screen.get_width() / 2 - settings_surf.get_width() / 2,
+            300,
+            self.screen,
+        )
+        quit_surf = text.TextWithShadow(
+            quit_text,
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        quit_surf.draw(
+            self.screen.get_width() / 2 - quit_surf.get_width() / 2, 380, self.screen
+        )
+
+    def draw_settings_menu(self) -> None:
+        self.screen.fill(BLACK)
+        # -- Update text of the buttons -- #
+        if self.settings_menu_selected == 0:
+            note_speed_text = (
+                f"> {self.settings_menu_text[0]}{round(self.settings.note_speed, 1)} <"
+            )
+        else:
+            note_speed_text = (
+                f"{self.settings_menu_text[0]}{round(self.settings.note_speed, 1)}"
+            )
+
+        if self.settings_menu_selected == 1:
+            background_dim_text = (
+                f"> {self.settings_menu_text[1]}{self.settings.background_dim}% <"
+            )
+        else:
+            background_dim_text = (
+                f"{self.settings_menu_text[1]}{self.settings.background_dim}%"
+            )
+
+        if self.settings_menu_selected == 2:
+            volume_text = f"> {self.settings_menu_text[2]}{self.settings.volume}% <"
+        else:
+            volume_text = f"{self.settings_menu_text[2]}{self.settings.volume}%"
+
+        if self.settings_menu_selected == 3:
+            back_text = f"> {self.settings_menu_text[3]} <"
+        else:
+            back_text = f"{self.settings_menu_text[3]}"
+
+        title_surf = text.TextWithShadow(
+            "Settings",
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        title_surf.draw(
+            self.screen.get_width() / 2 - title_surf.get_width() / 2,
+            100,
+            self.screen,
+        )
+
+        note_speed_surf = text.TextWithShadow(
+            note_speed_text,
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        note_speed_surf.draw(
+            self.screen.get_width() / 2 - note_speed_surf.get_width() / 2,
+            220,
+            self.screen,
+        )
+
+        background_dim_surf = text.TextWithShadow(
+            background_dim_text,
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        background_dim_surf.draw(
+            self.screen.get_width() / 2 - background_dim_surf.get_width() / 2,
+            300,
+            self.screen,
+        )
+
+        volume_surf = text.TextWithShadow(
+            volume_text,
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        volume_surf.draw(
+            self.screen.get_width() / 2 - volume_surf.get_width() / 2, 380, self.screen
+        )
+
+        back_surf = text.TextWithShadow(
+            back_text,
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        back_surf.draw(
+            self.screen.get_width() / 2 - back_surf.get_width() / 2,
+            460,
+            self.screen,
+        )
+
+    def draw_pause_menu(self):
+        s = pg.Surface(self.size, pg.SRCALPHA)  # per-pixel alpha
+        s.fill((0, 0, 0, 128))  # notice the alpha value in the color
+        self.screen.blit(s, (0, 0))
+        # -- Paused text -- #
+        paused_surf = text.TextWithShadow(
+            "Game paused",
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        paused_surf.draw(
+            self.screen.get_width() / 2 - paused_surf.get_width() / 2,
+            100,
+            self.screen,
+        )
+        # -- Update text of the buttons -- #
+        if self.pause_menu_selected == 0:
+            resume_text = f"> {self.pause_menu_text[0]} <"
+        else:
+            resume_text = self.pause_menu_text[0]
+
+        if self.pause_menu_selected == 1:
+            retry_text = f"> {self.pause_menu_text[1]} <"
+        else:
+            retry_text = self.pause_menu_text[1]
+
+        if self.pause_menu_selected == 2:
+            leave_text = f"> {self.pause_menu_text[2]} <"
+        else:
+            leave_text = self.pause_menu_text[2]
+
+        # -- Buttons -- #
+        resume_surf = text.TextWithShadow(
+            resume_text,
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        resume_surf.draw(
+            self.screen.get_width() / 2 - resume_surf.get_width() / 2, 220, self.screen
+        )
+
+        retry_surf = text.TextWithShadow(
+            retry_text,
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        retry_surf.draw(
+            self.screen.get_width() / 2 - retry_surf.get_width() / 2, 300, self.screen
+        )
+
+        leave_surf = text.TextWithShadow(
+            leave_text,
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        leave_surf.draw(
+            self.screen.get_width() / 2 - leave_surf.get_width() / 2, 380, self.screen
+        )
+
     def on_event(self, event) -> None:
         """Used to handle pygame events.
 
@@ -611,39 +960,18 @@ class Game:
         """
         if event.type == QUIT:
             self._running = False
-        if self.main_menu:
-            if event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
-                    self._running = False
-        if self.gamePaused:
-            if event.type == KEYDOWN:
-                if event.key == K_RETURN and self.main_menu_state == 0:
-                    self.audioPlayer.mixer.music.unpause()
-                    self.gamePaused = False
-                if event.key == K_RETURN and self.main_menu_state == 1:
-                    self.retry()
-                    # TODO Retry option
-                if event.key == K_RETURN and self.main_menu_state == 2:
-                    self._running = False
-                if event.key == K_ESCAPE:
-                    self.audioPlayer.mixer.music.unpause()
-                    self.gamePaused = False
-                if event.key == K_DOWN:
-                    if self.main_menu_state < 2:
-                        self.main_menu_state += 1
-                    else:
-                        self.main_menu_state = 0
-                if event.key == K_UP:
-                    if self.main_menu_state > 0:
-                        self.main_menu_state -= 1
-                    else:
-                        self.main_menu_state = 2
-        elif not self.gamePaused and not self.main_menu:
+        if self.game_state == GameState.main_menu:
+            self.handle_main_menu(event=event)
+        if self.game_state == GameState.paused:
+            self.handle_pause_menu(event=event)
+        if self.game_state == GameState.settings_menu:
+            self.handle_settings_menu(event=event)
+        if self.game_state == GameState.in_game:
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
                     self.audioPlayer.mixer.music.pause()
-                    self.gamePaused = True
-        if self.playing:
+                    self.game_state = GameState.paused
+        if self.game_state == GameState.in_game:
             if event.type == KEYDOWN:
                 if event.key == K_EQUALS:
                     if self.timeToReact < 600:
@@ -728,7 +1056,7 @@ class Game:
 
     def on_loop(self) -> None:
         """Used to perform a game loop."""
-        if self.playing:
+        if self.game_state == GameState.in_game:
             self.wait_before_playing_song()
             self.user_interface.update_text(
                 self.score, self.lastGrade, self.combo, self.fps
@@ -742,65 +1070,11 @@ class Game:
     def on_render(self) -> None:
         """Used to perform rendering on screen."""
         self.clock.tick(FPS)
-        if self.main_menu:
-            self.screen.fill(BLACK)
-            title_surf = text.TextWithShadow(
-                "Koli Rhythm",
-                self.font,
-                WHITE,
-                BLACK,
-                4,
-            )
-            title_surf.draw(
-                self.screen.get_width() / 2 - title_surf.get_width() / 2,
-                100,
-                self.screen,
-            )
-            play_surf = text.TextWithShadow(
-                "Play",
-                self.font,
-                WHITE,
-                BLACK,
-                4,
-            )
-            offset = 10
-            button_play = pg.Surface(
-                (play_surf.get_width() + offset, play_surf.get_height() + offset)
-            )
-            button_play.fill((120, 150, 100))
-            self.screen.blit(button_play, (self.screen.get_width() / 2 - 150, 220))
-            play_surf.draw(
-                self.screen.get_width() / 2 - 150 + offset / 2,
-                220 + offset / 2,
-                self.screen,
-            )
-            settings_surf = text.TextWithShadow(
-                "Settings",
-                self.font,
-                WHITE,
-                BLACK,
-                4,
-            )
-            button_settings = pg.Surface(
-                (
-                    settings_surf.get_width() + offset,
-                    settings_surf.get_height() + offset,
-                )
-            )
-            button_settings.fill((120, 150, 100))
-            self.screen.blit(button_settings, (self.screen.get_width() / 2 - 150, 300))
-            settings_surf.draw(
-                self.screen.get_width() / 2 - 150 + offset / 2, 300, self.screen
-            )
-            quit_surf = text.TextWithShadow(
-                "Quit",
-                self.font,
-                WHITE,
-                BLACK,
-                4,
-            )
-            quit_surf.draw(self.screen.get_width() / 2 - 150, 380, self.screen)
-        if self.playing:
+        if self.game_state == GameState.main_menu:
+            self.draw_main_menu()
+        if self.game_state == GameState.settings_menu:
+            self.draw_settings_menu()
+        if self.game_state == GameState.in_game:
             self.fps = self.clock.get_fps()
             self.screen.fill(BLACK)
             self.other_sprites.draw(self.screen)
@@ -817,60 +1091,8 @@ class Game:
             for hit_glow in self.all_hit_glows:
                 hit_glow.draw(self.screen)
                 hit_glow.emit(self.screen)
-        if self.gamePaused:
-            s = pg.Surface(self.size, pg.SRCALPHA)  # per-pixel alpha
-            s.fill((0, 0, 0, 128))  # notice the alpha value in the color
-            self.screen.blit(s, (0, 0))
-            paused_surf = text.TextWithShadow(
-                "Game paused",
-                self.font,
-                WHITE,
-                BLACK,
-                4,
-            )
-            paused_surf.draw(
-                self.screen.get_width() / 2 - paused_surf.get_width() / 2,
-                100,
-                self.screen,
-            )
-            if self.main_menu_state == 0:
-                resume_text = f"> {self.menu_text[0]}"
-            else:
-                resume_text = self.menu_text[0]
-            if self.main_menu_state == 1:
-                retry_text = f"> {self.menu_text[1]}"
-            else:
-                retry_text = self.menu_text[1]
-
-            if self.main_menu_state == 2:
-                quit_text = f"> {self.menu_text[2]}"
-            else:
-                quit_text = self.menu_text[2]
-
-            resume_surf = text.TextWithShadow(
-                resume_text,
-                self.font,
-                WHITE,
-                BLACK,
-                4,
-            )
-            resume_surf.draw(self.screen.get_width() / 2 - 150, 220, self.screen)
-            retry_surf = text.TextWithShadow(
-                retry_text,
-                self.font,
-                WHITE,
-                BLACK,
-                4,
-            )
-            retry_surf.draw(self.screen.get_width() / 2 - 150, 300, self.screen)
-            quit_surf = text.TextWithShadow(
-                quit_text,
-                self.font,
-                WHITE,
-                BLACK,
-                4,
-            )
-            quit_surf.draw(self.screen.get_width() / 2 - 150, 380, self.screen)
+        if self.game_state == GameState.paused:
+            self.draw_pause_menu()
         pg.display.update()
 
     def on_cleanup(self) -> None:
@@ -890,7 +1112,7 @@ class Game:
 
 
 if __name__ == "__main__":
-    flags = FULLSCREEN | SCALED | HWSURFACE
-    # flags = RESIZABLE
+    # flags = FULLSCREEN | SCALED | HWSURFACE
+    flags = RESIZABLE
     game = Game(width=1280, height=720, initializationFlags=flags)
     game.on_execute()
