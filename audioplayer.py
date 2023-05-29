@@ -74,6 +74,10 @@ class AudioPlayer:
         """Used for playing music."""
         self.mixer.music.play()
 
+    def reset_song_position(self):
+        self.mixer.music.unload()
+        self.mixer.music.load(self.songSource)
+
     def update(self):
         """Used to update the playback timer."""
         self.songPosition = self.mixer.music.get_pos() + 800
