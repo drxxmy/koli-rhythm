@@ -35,8 +35,15 @@ class Settings:
         self.volume = 100
         self.time_to_react = 400
 
-    def update_time_to_react(self):
-        pass
+    def increment_note_speed(self):
+        if self.time_to_react > 200:
+            self.note_speed += 0.1
+            self.time_to_react -= 25
+
+    def decrement_note_speed(self):
+        if self.time_to_react < 600:
+            self.note_speed -= 0.1
+            self.time_to_react += 25
 
 
 class HitGlow:
@@ -271,17 +278,15 @@ class Note(pg.sprite.Sprite):
         self.offset_left = self.screen.get_width() / 2 - 258
         self.notes_margin = 132
         self.isClickable = False
-        self._x = self.offset_left + (self.line - 1) * self.notes_margin
-        self.y = -140
+        self.rect = self.image.get_rect()
+        self.rect.x = self.offset_left + (self.line - 1) * self.notes_margin
+        self.rect.y = -140
 
     def update_y_pos(self, progress) -> None:
-        self.y = -(
+        self.rect.y = -(
             self.startPosition
             + ((self.startPosition - self.perfectHitPosition) * progress)
         )
-
-    def draw(self, surface: pg.surface.Surface):
-        surface.blit(self.image, (self._x, self.y))
 
 
 class SingleNote(Note):
@@ -360,7 +365,7 @@ class Game:
         self.lowestFps = 99999
         self.screen = pg.display.set_mode(self.size, self._flags)
 
-        self.pressedKeys = [False, False, False, False]
+        self.pressed_keys = [False, False, False, False]
         self.chart = chart.Chart(chart_name="Freedom Dive")
         self.selected_difficulty = self.chart.difficulties[0]
 
@@ -383,7 +388,7 @@ class Game:
         self.game_state = GameState.main_menu
 
         self.time_since_game_start = pg.time.get_ticks()
-        self.time_since_starting_chart = 0
+        self.starting_chart_time = 0
         self.fps = self.clock.get_fps()
         self.score = 0
         self.combo = 0
@@ -395,7 +400,6 @@ class Game:
         )
 
         self.backgroundAlpha = 160
-        self.timeToReact = 400
         self.waitBeforePlaying = 1000
         self.startedPlayingSong = False
 
@@ -461,7 +465,7 @@ class Game:
             ):
                 note_positions = str(self.selected_difficulty.notes[key])
                 spawn_lines = self.get_spawn_lines(note_positions=note_positions)
-                timing = int(key) - self.timeToReact / 2
+                timing = int(key) - self.settings.time_to_react / 2
                 for line in spawn_lines:
                     image = self.get_image_for_note(line)
                     note = Note(
@@ -502,14 +506,13 @@ class Game:
     def get_note_progress(self, note: Note):
         progress = 1 - (
             (note.timing + self.waitBeforePlaying - self.audioPlayer.songPosition)
-            / self.timeToReact
+            / self.settings.time_to_react
         )
         return progress
 
     def destroy_note(
         self,
         line: int,
-        note: Note,
     ) -> None:
         for note in self.all_notes:
             if note.line == line and note.isClickable:
@@ -518,8 +521,7 @@ class Game:
 
     def draw_notes(self) -> None:
         """Used to draw notes on screen."""
-        for note in self.all_notes:
-            note.draw(self.screen)
+        self.all_notes.draw(self.screen)
 
     def draw_bar(self) -> None:
         """Used to draw a judgement bar on screen."""
@@ -542,14 +544,8 @@ class Game:
         """Used to wait before playing a song."""
 
         if not self.startedPlayingSong:
-            self.time_since_starting_chart = (
-                pg.time.get_ticks() - self.time_since_game_start
-            )
-            print(self.time_since_starting_chart)
-        if (
-            self.time_since_starting_chart >= self.waitBeforePlaying
-            and not self.startedPlayingSong
-        ):
+            self.elapsed_time = pg.time.get_ticks() - self.starting_chart_time
+        if self.elapsed_time >= self.waitBeforePlaying and not self.startedPlayingSong:
             self.audioPlayer.playSong()
             self.startedPlayingSong = True
 
@@ -614,18 +610,33 @@ class Game:
             self.score += 300 * score_multiplier
 
     def retry(self) -> None:
-        self.time_since_starting_chart = 0
-        # self.startedPlayingSong = False
-        self.spawned_notes_timings = []
+        self.all_notes.empty()
+        self.starting_chart_time = pg.time.get_ticks()
+        self.startedPlayingSong = False
+        self.spawned_notes_timings.clear()
         self.score = 0
         self.combo = 0
         self.accuracy = 100.0
-        self.audioPlayer.mixer.music.set_pos(800)
-        self.audioPlayer.update()
-        print(self.audioPlayer.songPosition)
-        self.gamePaused = False
-        self.all_notes.empty()
-        self.spawn_notes()
+        self.audioPlayer.reset_song_position()
+        self.audioPlayer.playSong()
+        print(f"{self.audioPlayer.songPosition} 0 0")
+
+    def handle_note(self, line: int) -> None:
+        self.pressed_keys[line - 1] = True
+        for note in self.all_notes:
+            self.destroy_note(line)
+            progress = self.get_note_progress(note)
+            self.lastGrade = self.get_grade(progress=progress)
+            hit = Hit(progress=progress)
+            # hit_glow = HitGlow(note.line, self.screen)
+            # for _ in range(10):
+            #     hit_glow.add_particles()
+            # self.all_hit_glows.append(hit_glow)
+            self.all_recent_hits.append(hit)
+            self.add_score(self.lastGrade)
+            self.change_combo(self.lastGrade)
+            self.audioPlayer.hitSound.play()
+            break
 
     def handle_main_menu(self, event) -> None:
         if event.type == KEYDOWN:
@@ -644,13 +655,11 @@ class Game:
                     self.main_menu_selected += 1
                 else:
                     self.main_menu_selected = 0
-                print(self.main_menu_selected)
             if event.key == K_UP:
                 if self.main_menu_selected > 0:
                     self.main_menu_selected -= 1
                 else:
                     self.main_menu_selected = 2
-                print(self.main_menu_selected)
 
     def handle_settings_menu(self, event) -> None:
         if event.type == KEYDOWN:
@@ -705,6 +714,8 @@ class Game:
                 self.pause_menu_selected = 0
             if event.key == K_RETURN and self.pause_menu_selected == 1:
                 self.retry()
+                self.game_state = GameState.in_game
+                self.pause_menu_selected = 0
             if event.key == K_RETURN and self.pause_menu_selected == 2:
                 self.game_state = GameState.main_menu
                 self.pause_menu_selected = 0
@@ -974,85 +985,30 @@ class Game:
         if self.game_state == GameState.in_game:
             if event.type == KEYDOWN:
                 if event.key == K_EQUALS:
-                    if self.timeToReact < 600:
-                        self.timeToReact -= 25
+                    self.settings.increment_note_speed()
+                    print(self.settings.time_to_react)
                 if event.key == K_MINUS:
-                    if self.timeToReact > 200:
-                        self.timeToReact += 25
-                if event.key == K_d and not self.pressedKeys[0]:
-                    self.pressedKeys[0] = True
-                    for note in self.all_notes:
-                        self.destroy_note(1, note)
-                        progress = self.get_note_progress(note)
-                        self.lastGrade = self.get_grade(progress=progress)
-                        hit = Hit(progress=progress)
-                        hit_glow = HitGlow(note.line, self.screen)
-                        for _ in range(10):
-                            hit_glow.add_particles()
-                        self.all_hit_glows.append(hit_glow)
-                        self.all_recent_hits.append(hit)
-                        self.add_score(self.lastGrade)
-                        self.change_combo(self.lastGrade)
-                        self.audioPlayer.hitSound.play()
-                        break
-                if event.key == K_f and not self.pressedKeys[1]:
-                    self.pressedKeys[1] = True
-                    for note in self.all_notes:
-                        self.destroy_note(2, note)
-                        progress = self.get_note_progress(note)
-                        self.lastGrade = self.get_grade(progress=progress)
-                        hit = Hit(progress=progress)
-                        hit_glow = HitGlow(note.line, self.screen)
-                        for _ in range(10):
-                            hit_glow.add_particles()
-                        self.all_hit_glows.append(hit_glow)
-                        self.all_recent_hits.append(hit)
-                        self.add_score(self.lastGrade)
-                        self.change_combo(self.lastGrade)
-                        self.audioPlayer.hitSound.play()
-                        break
-                if event.key == K_j and not self.pressedKeys[2]:
-                    self.pressedKeys[2] = True
-                    for note in self.all_notes:
-                        self.destroy_note(3, note)
-                        progress = self.get_note_progress(note)
-                        self.lastGrade = self.get_grade(progress=progress)
-                        hit = Hit(progress=progress)
-                        hit_glow = HitGlow(note.line, self.screen)
-                        for _ in range(10):
-                            hit_glow.add_particles()
-                        self.all_hit_glows.append(hit_glow)
-                        self.all_recent_hits.append(hit)
-                        self.add_score(self.lastGrade)
-                        self.change_combo(self.lastGrade)
-                        self.audioPlayer.hitSound.play()
-                        break
-                if event.key == K_k and not self.pressedKeys[3]:
-                    self.pressedKeys[3] = True
-                    for note in self.all_notes:
-                        self.destroy_note(4, note)
-                        progress = self.get_note_progress(note)
-                        self.lastGrade = self.get_grade(progress=progress)
-                        hit = Hit(progress=progress)
-                        hit_glow = HitGlow(note.line, self.screen)
-                        for _ in range(10):
-                            hit_glow.add_particles()
-                        self.all_hit_glows.append(hit_glow)
-                        self.all_recent_hits.append(hit)
-                        self.add_score(self.lastGrade)
-                        self.change_combo(self.lastGrade)
-                        self.audioPlayer.hitSound.play()
-                        break
+                    self.settings.decrement_note_speed()
+                    print(self.settings.time_to_react)
+
+                if event.key == K_d and not self.pressed_keys[0]:
+                    self.handle_note(line=1)
+                if event.key == K_f and not self.pressed_keys[1]:
+                    self.handle_note(line=2)
+                if event.key == K_j and not self.pressed_keys[2]:
+                    self.handle_note(line=3)
+                if event.key == K_k and not self.pressed_keys[3]:
+                    self.handle_note(line=4)
 
             if event.type == KEYUP:
-                if event.key == K_d and self.pressedKeys[0]:
-                    self.pressedKeys[0] = False
-                if event.key == K_f and self.pressedKeys[1]:
-                    self.pressedKeys[1] = False
-                if event.key == K_j and self.pressedKeys[2]:
-                    self.pressedKeys[2] = False
-                if event.key == K_k and self.pressedKeys[3]:
-                    self.pressedKeys[3] = False
+                if event.key == K_d and self.pressed_keys[0]:
+                    self.pressed_keys[0] = False
+                if event.key == K_f and self.pressed_keys[1]:
+                    self.pressed_keys[1] = False
+                if event.key == K_j and self.pressed_keys[2]:
+                    self.pressed_keys[2] = False
+                if event.key == K_k and self.pressed_keys[3]:
+                    self.pressed_keys[3] = False
 
     def on_loop(self) -> None:
         """Used to perform a game loop."""
@@ -1061,11 +1017,11 @@ class Game:
             self.user_interface.update_text(
                 self.score, self.lastGrade, self.combo, self.fps
             )
-            self.update_notes()
-            self.audioPlayer.update()
             self.spawn_notes()
+            self.update_notes()
             self.update_hits()
             self.update_hit_glows()
+        self.audioPlayer.update()
 
     def on_render(self) -> None:
         """Used to perform rendering on screen."""
@@ -1113,6 +1069,6 @@ class Game:
 
 if __name__ == "__main__":
     # flags = FULLSCREEN | SCALED | HWSURFACE
-    flags = RESIZABLE
+    flags = RESIZABLE | SCALED
     game = Game(width=1280, height=720, initializationFlags=flags)
     game.on_execute()
