@@ -26,6 +26,8 @@ class GameState(Enum):
     main_menu = 1
     settings_menu = 2
     paused = 3
+    chart_select_menu = 4
+    difficulty_select_menu = 5
 
 
 class Settings:
@@ -365,14 +367,21 @@ class Game:
         self.lowestFps = 99999
         self.screen = pg.display.set_mode(self.size, self._flags)
 
+        self.enter_is_pressed = False
         self.pressed_keys = [False, False, False, False]
-        self.chart = chart.Chart(chart_name="Freedom Dive")
-        self.selected_difficulty = self.chart.difficulties[0]
+        self.selected_chart = None  # chart.Chart(chart_name="Freedom Dive")
+        self.selected_difficulty = None  # self.selected_chart.difficulties[0]
 
-        self.audioPlayer = audioplayer.AudioPlayer(self.chart.bpm, self.chart.audio)
+        self.audioPlayer = None
 
         self.main_menu_text = ["Play", "Settings", "Quit"]
         self.main_menu_selected = 0
+
+        self.charts = self.get_charts()
+        self.chart_select_menu_selected = 0
+
+        self.difficulties = None
+        self.difficulties_select_menu_selected = 0
 
         self.pause_menu_text = ["Resume", "Retry", "Leave"]
         self.pause_menu_selected = 0
@@ -409,6 +418,12 @@ class Game:
         self.other_sprites = pg.sprite.RenderUpdates()
         self.load_resources()
 
+    def get_charts(self) -> list:
+        charts = [
+            f.name for f in os.scandir(os.path.join("src", "charts")) if f.is_dir()
+        ]
+        return charts
+
     def load_resources(self) -> None:
         """Used to load resources of the game. (Fonts, sprites etc)"""
         self.notesSheet = spritesheet.SpriteSheet(
@@ -420,8 +435,6 @@ class Game:
         self.fourthNote = self.notesSheet.get_image(3, 120, 120, 1, BLACK)
         self.bar = pg.image.load(os.path.join("sprites", "notes", "barSheet.png"))
         self.font = pg.font.Font(os.path.join("fonts", "PixeloidSansBold.ttf"), 45)
-        self.background = Background(self.chart.background)
-        self.other_sprites.add(self.background)
 
     def update_hits(self) -> None:
         for hit in self.all_recent_hits:
@@ -640,14 +653,17 @@ class Game:
 
     def handle_main_menu(self, event) -> None:
         if event.type == KEYDOWN:
-            if event.key == K_RETURN and self.main_menu_selected == 0:
-                self.game_state = GameState.in_game
-                self.main_menu_selected = 0
-            if event.key == K_RETURN and self.main_menu_selected == 1:
-                self.game_state = GameState.settings_menu
-                self.main_menu_selected = 0
-            if event.key == K_RETURN and self.main_menu_selected == 2:
-                self._running = False
+            if not self.enter_is_pressed:
+                if event.key == K_RETURN and self.main_menu_selected == 0:
+                    self.game_state = GameState.chart_select_menu
+                    self.charts = self.get_charts()
+                    self.main_menu_selected = 0
+                if event.key == K_RETURN and self.main_menu_selected == 1:
+                    self.game_state = GameState.settings_menu
+                    self.main_menu_selected = 0
+                if event.key == K_RETURN and self.main_menu_selected == 2:
+                    self._running = False
+                self.enter_is_pressed = True
             if event.key == K_ESCAPE:
                 self._running = False
             if event.key == K_DOWN:
@@ -660,6 +676,69 @@ class Game:
                     self.main_menu_selected -= 1
                 else:
                     self.main_menu_selected = 2
+        if event.type == KEYUP:
+            self.enter_is_pressed = False
+
+    def handle_chart_select_menu(self, event) -> None:
+        if event.type == KEYDOWN:
+            if not self.enter_is_pressed:
+                if event.key == K_RETURN:
+                    self.selected_chart = chart.Chart(
+                        self.charts[self.chart_select_menu_selected]
+                    )
+                    self.difficulties = self.selected_chart.get_all_difficulties()
+                    self.background = Background(self.selected_chart.background)
+                    self.other_sprites.add(self.background)
+                    self.game_state = GameState.difficulty_select_menu
+                    self.enter_is_pressed = True
+            if event.key == K_ESCAPE:
+                self.game_state = GameState.main_menu
+            if event.key == K_DOWN:
+                if self.chart_select_menu_selected < len(self.charts) - 1:
+                    self.chart_select_menu_selected += 1
+                else:
+                    self.chart_select_menu_selected = 0
+            if event.key == K_UP:
+                if self.chart_select_menu_selected > 0:
+                    self.chart_select_menu_selected -= 1
+                else:
+                    self.chart_select_menu_selected = len(self.charts) - 1
+
+        if event.type == KEYUP:
+            if event.key == K_RETURN:
+                self.enter_is_pressed = False
+
+    def handle_difficulty_select_menu(self, event) -> None:
+        if event.type == KEYDOWN:
+            if event.key == K_ESCAPE:
+                self.game_state = GameState.chart_select_menu
+                self.chart = None
+            if not self.enter_is_pressed:
+                if event.key == K_RETURN:
+                    self.selected_difficulty = self.difficulties[
+                        self.difficulties_select_menu_selected
+                    ]
+                    self.game_state = GameState.in_game
+                    self.audioPlayer = audioplayer.AudioPlayer(
+                        self.selected_chart.bpm, self.selected_chart.audio
+                    )
+                    self.background = Background(self.selected_chart.background)
+                    self.enter_is_pressed = True
+            if event.key == K_DOWN:
+                if self.difficulties_select_menu_selected < len(self.difficulties) - 1:
+                    self.difficulties_select_menu_selected += 1
+                else:
+                    self.difficulties_select_menu_selected = 0
+                print(self.difficulties_select_menu_selected)
+            if event.key == K_UP:
+                if self.difficulties_select_menu_selected > 0:
+                    self.difficulties_select_menu_selected -= 1
+                else:
+                    self.difficulties_select_menu_selected = len(self.difficulties) - 1
+                print(self.difficulties_select_menu_selected)
+        if event.type == KEYUP:
+            if event.key == K_RETURN:
+                self.enter_is_pressed = False
 
     def handle_settings_menu(self, event) -> None:
         if event.type == KEYDOWN:
@@ -799,6 +878,112 @@ class Game:
         quit_surf.draw(
             self.screen.get_width() / 2 - quit_surf.get_width() / 2, 380, self.screen
         )
+
+    def draw_chart_select_menu(self) -> None:
+        self.screen.fill(BLACK)
+        # -- Update text of the buttons -- #
+        chart_texts = []
+        for chart_index in range(0, len(self.charts)):
+            if chart_index == self.chart_select_menu_selected:
+                chart_text = f"> {self.charts[chart_index]} <"
+            else:
+                chart_text = self.charts[chart_index]
+            chart_texts.append(chart_text)
+
+        title_surf = text.TextWithShadow(
+            "Charts",
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        title_surf.draw(
+            self.screen.get_width() / 2 - title_surf.get_width() / 2,
+            100,
+            self.screen,
+        )
+
+        hint_surf = text.TextWithShadow(
+            "Press ENTER to select",
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        hint_surf.draw(
+            self.screen.get_width() / 2 - hint_surf.get_width() / 2,
+            self.screen.get_height() - 100,
+            self.screen,
+        )
+        margin = 0
+        for chart_text in chart_texts:
+            chart_surf = text.TextWithShadow(
+                chart_text,
+                self.font,
+                WHITE,
+                BLACK,
+                4,
+            )
+            chart_surf.draw(
+                self.screen.get_width() / 2 - chart_surf.get_width() / 2,
+                220 + margin,
+                self.screen,
+            )
+            margin += 80
+
+    def draw_difficulty_select_menu(self) -> None:
+        self.screen.fill(BLACK)
+        # -- Update text of the buttons -- #
+        difficulty_texts = []
+        for difficulty_index in range(0, len(self.difficulties)):
+            if difficulty_index == self.difficulties_select_menu_selected:
+                difficulty_text = (
+                    f"> {self.difficulties[difficulty_index].difficulty} <"
+                )
+            else:
+                difficulty_text = self.difficulties[difficulty_index].difficulty
+            difficulty_texts.append(difficulty_text)
+
+        title_surf = text.TextWithShadow(
+            "Difficulties",
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        title_surf.draw(
+            self.screen.get_width() / 2 - title_surf.get_width() / 2,
+            100,
+            self.screen,
+        )
+
+        hint_surf = text.TextWithShadow(
+            "Press ENTER to select",
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        hint_surf.draw(
+            self.screen.get_width() / 2 - hint_surf.get_width() / 2,
+            self.screen.get_height() - 100,
+            self.screen,
+        )
+        margin = 0
+        for difficulty_text in difficulty_texts:
+            difficulty_surf = text.TextWithShadow(
+                difficulty_text,
+                self.font,
+                WHITE,
+                BLACK,
+                4,
+            )
+            difficulty_surf.draw(
+                self.screen.get_width() / 2 - difficulty_surf.get_width() / 2,
+                220 + margin,
+                self.screen,
+            )
+            margin += 80
 
     def draw_settings_menu(self) -> None:
         self.screen.fill(BLACK)
@@ -973,6 +1158,10 @@ class Game:
             self._running = False
         if self.game_state == GameState.main_menu:
             self.handle_main_menu(event=event)
+        if self.game_state == GameState.chart_select_menu:
+            self.handle_chart_select_menu(event=event)
+        if self.game_state == GameState.difficulty_select_menu:
+            self.handle_difficulty_select_menu(event=event)
         if self.game_state == GameState.paused:
             self.handle_pause_menu(event=event)
         if self.game_state == GameState.settings_menu:
@@ -1021,13 +1210,17 @@ class Game:
             self.update_notes()
             self.update_hits()
             self.update_hit_glows()
-        self.audioPlayer.update()
+            self.audioPlayer.update()
 
     def on_render(self) -> None:
         """Used to perform rendering on screen."""
         self.clock.tick(FPS)
         if self.game_state == GameState.main_menu:
             self.draw_main_menu()
+        if self.game_state == GameState.chart_select_menu:
+            self.draw_chart_select_menu()
+        if self.game_state == GameState.difficulty_select_menu:
+            self.draw_difficulty_select_menu()
         if self.game_state == GameState.settings_menu:
             self.draw_settings_menu()
         if self.game_state == GameState.in_game:
