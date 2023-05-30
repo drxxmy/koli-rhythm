@@ -9,7 +9,6 @@ from pygame.locals import *
 # imports
 import spritesheet
 import audioplayer
-import converter
 import text
 import chart
 
@@ -531,6 +530,7 @@ class Game:
             if note.line == line and note.isClickable:
                 self.audioPlayer.hitSound.play()
                 note.kill()
+                break
 
     def draw_notes(self) -> None:
         """Used to draw notes on screen."""
