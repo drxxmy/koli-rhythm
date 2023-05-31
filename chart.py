@@ -48,6 +48,7 @@ class Difficulty:
                 self.mapper = data["metadata"]["mapper"]
                 self.bpm = float(data["metadata"]["bpm"])
                 self.difficulty = data["metadata"]["difficulty"]
+                self.rating = data["metadata"]["rating"]
                 self.notes = data["notes"]
                 self.audio = os.path.join(data["general"]["audio"])
                 self.background = data["general"]["background"]
@@ -109,6 +110,8 @@ class Chart:
             path = os.path.join(self.map_absolute_path, filename)
             difficulty = Difficulty(path)
             difficulties.append(difficulty)
+
+        difficulties.sort(key=lambda x: x.rating)
         return difficulties
 
 
