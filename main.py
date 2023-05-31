@@ -27,6 +27,7 @@ class GameState(Enum):
     paused = 3
     chart_select_menu = 4
     difficulty_select_menu = 5
+    endscreen = 6
 
 
 class Settings:
@@ -372,6 +373,7 @@ class Game:
         self.selected_difficulty = None  # self.selected_chart.difficulties[0]
 
         self.audioPlayer = None
+        self.chart_ended = False
 
         self.main_menu_text = ["Play", "Settings", "Quit"]
         self.main_menu_selected = 0
@@ -398,8 +400,10 @@ class Game:
         self.time_since_game_start = pg.time.get_ticks()
         self.starting_chart_time = 0
         self.fps = self.clock.get_fps()
+        self.notes_destroyed = 0
         self.score = 0
         self.combo = 0
+        self.max_combo = 0
         self.accuracy = 100.0
         self.lastGrade = ""
         self.spawned_notes_timings = []
@@ -488,6 +492,7 @@ class Game:
                     )
                     self.all_notes.add(note)
                 self.spawned_notes_timings.append(key)
+                break
 
     def draw_rectangle(self) -> None:
         """Used to draw two rectangles as a playfield."""
@@ -512,6 +517,9 @@ class Game:
             if progress >= 0.7:
                 note.isClickable = True
             if progress > 1.3:
+                self.notes_destroyed += 1
+                if self.combo >= self.max_combo:
+                    self.max_combo = self.combo
                 self.combo = 0
                 note.kill()
 
@@ -528,6 +536,7 @@ class Game:
     ) -> None:
         for note in self.all_notes:
             if note.line == line and note.isClickable:
+                self.notes_destroyed += 1
                 self.audioPlayer.hitSound.play()
                 note.kill()
                 break
@@ -590,6 +599,12 @@ class Game:
             ),
         )
 
+    def reset_stats(self):
+        self.score = 0
+        self.combo = 0
+        self.lastGrade = ""
+        self.accuracy = 100.0
+
     def calculate_accuracy(self):
         # TODO - Find Formula
         pass
@@ -598,6 +613,8 @@ class Game:
         if grade != "Miss!":
             self.combo += 1
         else:
+            if self.combo >= self.max_combo:
+                self.max_combo = self.combo
             self.combo = 0
 
     def get_grade(self, progress: float) -> str:
@@ -629,10 +646,13 @@ class Game:
         self.spawned_notes_timings.clear()
         self.score = 0
         self.combo = 0
+        self.max_combo = 0
         self.accuracy = 100.0
-        self.audioPlayer.reset_song_position()
+        self.audioPlayer = None
+        self.audioPlayer = audioplayer.AudioPlayer(
+            self.selected_chart.bpm, self.selected_chart.audio
+        )
         self.audioPlayer.playSong()
-        print(f"{self.audioPlayer.songPosition} 0 0")
 
     def handle_note(self, line: int) -> None:
         self.pressed_keys[line - 1] = True
@@ -713,6 +733,7 @@ class Game:
             if event.key == K_ESCAPE:
                 self.game_state = GameState.chart_select_menu
                 self.chart = None
+                self.difficulties_select_menu_selected = 0
             if not self.enter_is_pressed:
                 if event.key == K_RETURN:
                     self.selected_difficulty = self.difficulties[
@@ -724,35 +745,28 @@ class Game:
                     )
                     self.background = Background(self.selected_chart.background)
                     self.enter_is_pressed = True
+                    self.difficulties_select_menu_selected = 0
             if event.key == K_DOWN:
                 if self.difficulties_select_menu_selected < len(self.difficulties) - 1:
                     self.difficulties_select_menu_selected += 1
                 else:
                     self.difficulties_select_menu_selected = 0
-                print(self.difficulties_select_menu_selected)
             if event.key == K_UP:
                 if self.difficulties_select_menu_selected > 0:
                     self.difficulties_select_menu_selected -= 1
                 else:
                     self.difficulties_select_menu_selected = len(self.difficulties) - 1
-                print(self.difficulties_select_menu_selected)
         if event.type == KEYUP:
             if event.key == K_RETURN:
                 self.enter_is_pressed = False
 
     def handle_settings_menu(self, event) -> None:
         if event.type == KEYDOWN:
-            # if event.key == K_RETURN and self.settings_menu_selected == 0:
-            #     pass
-            # if event.key == K_RETURN and self.settings_menu_selected == 1:
-            #     pass
-            # if event.key == K_RETURN and self.settings_menu_selected == 2:
-            #     pass
             if event.key == K_RETURN and self.settings_menu_selected == 3:
                 self.game_state = GameState.main_menu
                 self.settings_menu_selected = 0
             if event.key == K_ESCAPE:
-                pass
+                self.game_state = GameState.main_menu
             if event.key == K_LEFT and self.settings_menu_selected == 0:
                 if self.settings.note_speed > 0.6:
                     self.settings.note_speed -= 0.1
@@ -796,6 +810,10 @@ class Game:
                 self.game_state = GameState.in_game
                 self.pause_menu_selected = 0
             if event.key == K_RETURN and self.pause_menu_selected == 2:
+                self.audioPlayer = None
+                self.startedPlayingSong = False
+                self.all_notes.empty()
+                self.spawned_notes_timings.clear()
                 self.game_state = GameState.main_menu
                 self.pause_menu_selected = 0
             if event.key == K_ESCAPE:
@@ -812,6 +830,38 @@ class Game:
                     self.pause_menu_selected -= 1
                 else:
                     self.pause_menu_selected = 2
+
+    def handle_endscreen(self, event) -> None:
+        if event.type == KEYDOWN:
+            if event.key == K_ESCAPE:
+                self.game_state = GameState.difficulty_select_menu
+
+    def handle_gameplay(self, event) -> None:
+        if event.type == KEYDOWN:
+            if event.key == K_ESCAPE:
+                self.audioPlayer.mixer.music.pause()
+                self.game_state = GameState.paused
+            if event.key == K_EQUALS:
+                self.settings.increment_note_speed()
+            if event.key == K_MINUS:
+                self.settings.decrement_note_speed()
+            if event.key == K_d and not self.pressed_keys[0]:
+                self.handle_note(line=1)
+            if event.key == K_f and not self.pressed_keys[1]:
+                self.handle_note(line=2)
+            if event.key == K_j and not self.pressed_keys[2]:
+                self.handle_note(line=3)
+            if event.key == K_k and not self.pressed_keys[3]:
+                self.handle_note(line=4)
+        if event.type == KEYUP:
+            if event.key == K_d and self.pressed_keys[0]:
+                self.pressed_keys[0] = False
+            if event.key == K_f and self.pressed_keys[1]:
+                self.pressed_keys[1] = False
+            if event.key == K_j and self.pressed_keys[2]:
+                self.pressed_keys[2] = False
+            if event.key == K_k and self.pressed_keys[3]:
+                self.pressed_keys[3] = False
 
     def draw_main_menu(self) -> None:
         self.screen.fill(BLACK)
@@ -1146,6 +1196,84 @@ class Game:
             self.screen.get_width() / 2 - leave_surf.get_width() / 2, 380, self.screen
         )
 
+    def draw_endscreen(self) -> None:
+        self.screen.fill(BLACK)
+        # -- Update text of the buttons -- #
+
+        title_surf = text.TextWithShadow(
+            "Result",
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        title_surf.draw(
+            self.screen.get_width() / 2 - title_surf.get_width() / 2,
+            100,
+            self.screen,
+        )
+
+        hint_surf = text.TextWithShadow(
+            "Press ESCAPE to close endscreen",
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        hint_surf.draw(
+            self.screen.get_width() / 2 - hint_surf.get_width() / 2,
+            self.screen.get_height() - 100,
+            self.screen,
+        )
+
+        score_surf = text.TextWithShadow(
+            f"Score: {self.score:,d}",
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        score_surf.draw(
+            self.screen.get_width() / 2 - score_surf.get_width() / 2,
+            200,
+            self.screen,
+        )
+
+        combo_surf = text.TextWithShadow(
+            f"Combo: {self.max_combo:,d}/{self.notes_destroyed:,d}",
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        combo_surf.draw(
+            self.screen.get_width() / 2 - combo_surf.get_width() / 2,
+            300,
+            self.screen,
+        )
+
+        accuracy_surf = text.TextWithShadow(
+            f"Accuracy: {self.accuracy}%",
+            self.font,
+            WHITE,
+            BLACK,
+            4,
+        )
+        accuracy_surf.draw(
+            self.screen.get_width() / 2 - accuracy_surf.get_width() / 2,
+            400,
+            self.screen,
+        )
+
+    def get_last_note_timing(self) -> int:
+        sorted_notes = list(self.selected_difficulty.notes.items())
+        return int(sorted_notes[-1][0])
+
+    def end_of_the_chart(self) -> bool:
+        if self.audioPlayer.songPosition - 3000 > self.get_last_note_timing():
+            return True
+        return False
+
     def on_event(self, event) -> None:
         """Used to handle pygame events.
 
@@ -1166,42 +1294,16 @@ class Game:
             self.handle_pause_menu(event=event)
         if self.game_state == GameState.settings_menu:
             self.handle_settings_menu(event=event)
+        if self.game_state == GameState.endscreen:
+            self.handle_endscreen(event=event)
         if self.game_state == GameState.in_game:
-            if event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
-                    self.audioPlayer.mixer.music.pause()
-                    self.game_state = GameState.paused
-        if self.game_state == GameState.in_game:
-            if event.type == KEYDOWN:
-                if event.key == K_EQUALS:
-                    self.settings.increment_note_speed()
-                    print(self.settings.time_to_react)
-                if event.key == K_MINUS:
-                    self.settings.decrement_note_speed()
-                    print(self.settings.time_to_react)
-
-                if event.key == K_d and not self.pressed_keys[0]:
-                    self.handle_note(line=1)
-                if event.key == K_f and not self.pressed_keys[1]:
-                    self.handle_note(line=2)
-                if event.key == K_j and not self.pressed_keys[2]:
-                    self.handle_note(line=3)
-                if event.key == K_k and not self.pressed_keys[3]:
-                    self.handle_note(line=4)
-
-            if event.type == KEYUP:
-                if event.key == K_d and self.pressed_keys[0]:
-                    self.pressed_keys[0] = False
-                if event.key == K_f and self.pressed_keys[1]:
-                    self.pressed_keys[1] = False
-                if event.key == K_j and self.pressed_keys[2]:
-                    self.pressed_keys[2] = False
-                if event.key == K_k and self.pressed_keys[3]:
-                    self.pressed_keys[3] = False
+            self.handle_gameplay(event=event)
 
     def on_loop(self) -> None:
         """Used to perform a game loop."""
         if self.game_state == GameState.in_game:
+            if self.end_of_the_chart():
+                self.game_state = GameState.endscreen
             self.wait_before_playing_song()
             self.user_interface.update_text(
                 self.score, self.lastGrade, self.combo, self.fps
@@ -1223,6 +1325,8 @@ class Game:
             self.draw_difficulty_select_menu()
         if self.game_state == GameState.settings_menu:
             self.draw_settings_menu()
+        if self.game_state == GameState.endscreen:
+            self.draw_endscreen()
         if self.game_state == GameState.in_game:
             self.fps = self.clock.get_fps()
             self.screen.fill(BLACK)
@@ -1261,7 +1365,7 @@ class Game:
 
 
 if __name__ == "__main__":
-    # flags = FULLSCREEN | SCALED | HWSURFACE
-    flags = RESIZABLE | SCALED
+    flags = FULLSCREEN | SCALED | HWSURFACE
+    # flags = RESIZABLE | SCALED
     game = Game(width=1280, height=720, initializationFlags=flags)
     game.on_execute()
