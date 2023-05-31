@@ -18,7 +18,9 @@ class Converter:
         Retrieves data from the Objects section.
     """
 
-    def __init__(self, pathToOsu: str, songBpm: str, difficultyName: str) -> None:
+    def __init__(
+        self, pathToOsu: str, songBpm: str, difficultyName: str, rating: str
+    ) -> None:
         """
         Parameters
         ----------
@@ -28,10 +30,13 @@ class Converter:
             BPM of the song.
         difficultyName : str
             Song difficulty name.
+        rating : str
+            Difficulty rating value.
         """
         self.pathToOsu = pathToOsu
         self.songBpm = songBpm
         self.difficultyName = difficultyName
+        self.rating = rating
         self.map = self.openFile(pathToOsu)
 
     def openFile(self, filePath: str):
@@ -60,6 +65,7 @@ class Converter:
         notes = self.parseNotes()
         metadata["bpm"] = self.songBpm
         metadata["difficulty"] = self.difficultyName
+        metadata["rating"] = self.rating
         fileName = f"{metadata['artist']} - {metadata['title']} [{metadata['difficulty']}].json"
         map_json = {"general": general, "metadata": metadata, "notes": notes}
         try:
