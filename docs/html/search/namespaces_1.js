@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['main_0',['main',['../namespacemain.html',1,'']]]
+  ['chart_0',['chart',['../namespacechart.html',1,'']]],
+  ['converter_1',['converter',['../namespaceconverter.html',1,'']]]
 ];

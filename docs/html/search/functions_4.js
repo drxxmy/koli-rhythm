@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['handleinput_0',['handleInput',['../classmain_1_1_game.html#a3bb516bc9d217f952e1d16abd653a15f',1,'main::Game']]]
+  ['end_5fof_5fthe_5fchart_0',['end_of_the_chart',['../classmain_1_1_game.html#a0a9e5c708582103c6b2235b6a25c198d',1,'main::Game']]]
 ];

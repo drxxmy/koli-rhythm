@@ -1,5 +1,7 @@
 var searchData=
 [
-  ['offsetleft_0',['OffsetLeft',['../classmain_1_1_note.html#ab9de34a08bcee6583802a2e9c61d54a8',1,'main::Note']]],
-  ['other_5fsprites_1',['other_sprites',['../classmain_1_1_game.html#a19e895e5d29c6b1773a4f0cb0b0041fd',1,'main::Game']]]
+  ['note_5fimages_0',['note_images',['../classspawner_1_1_spawner.html#ae2cf368eba2a44ccbd8a7fbd95844939',1,'spawner::Spawner']]],
+  ['note_5fspeed_1',['note_speed',['../classsettings_1_1_settings.html#a13f361e8889aa32a43cb6caa071846a9',1,'settings::Settings']]],
+  ['notes_2',['notes',['../classchart_1_1_difficulty.html#aa65f2258c6c61e58d5e6d20cc472018f',1,'chart.Difficulty.notes()'],['../classmain_1_1_game.html#a2877c3db226986d1a0c26ae95fc67297',1,'main.Game.notes()']]],
+  ['notes_5fmargin_3',['notes_margin',['../classgraphics_1_1_note.html#a6581ff2e0497e6d2ed944921da3daef0',1,'graphics::Note']]]
 ];

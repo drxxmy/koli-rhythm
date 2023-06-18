@@ -6,115 +6,139 @@ class Converter:
 
     Methods
     -------
-    openFile(filePath)
+    open_file(file_path)
         Used to open an osu file.
-    generateJson()
+    generate_json()
         Creates JSON file with map data.
-    parseGeneral()
+    parse_general()
         Retrieves data from the General section.
-    parseMetadata()
+    parse_metadata()
         Retrieves data from the Metadata section.
-    parseNotes()
+    parse_notes()
         Retrieves data from the Objects section.
     """
 
     def __init__(
-        self, pathToOsu: str, songBpm: str, difficultyName: str, rating: str
+        self, path_to_osu: str, song_bpm: str, difficulty_name: str, rating: str
     ) -> None:
         """
         Parameters
         ----------
-        pathToOsu : str
+        path_to_osu : str
             Osu file path.
-        songBpm : str
+        song_bpm : str
             BPM of the song.
-        difficultyName : str
+        difficulty_name : str
             Song difficulty name.
         rating : str
             Difficulty rating value.
-        """
-        self.pathToOsu = pathToOsu
-        self.songBpm = songBpm
-        self.difficultyName = difficultyName
-        self.rating = rating
-        self.map = self.openFile(pathToOsu)
 
-    def openFile(self, filePath: str):
+        Raises
+        ------
+        AssertionError
+            file_path, song_bpm, difficulty_name or rating is not string.
+        """
+        assert isinstance(path_to_osu, str), "file_path must be str."
+        assert isinstance(song_bpm, str), "song_bpm must be str."
+        assert isinstance(difficulty_name, str), "difficulty_name must be str."
+        assert isinstance(rating, str), "rating must be str."
+        self.path_to_osu = path_to_osu
+        self.song_bpm = song_bpm
+        self.difficulty_name = difficulty_name
+        self.rating = rating
+        self.map = self.open_file(path_to_osu)
+
+    def open_file(self, file_path: str):
         """Used to open an osu file.
 
         Parameters
         ----------
-        filePath : str
+        file_path : str
             The path to the osu file.
 
         Raises
         ------
         OSError
             If there are no JSON files in the directory.
+        AssertionError
+            file_path is not string.
         """
+        assert isinstance(file_path, str), "file_path must be str."
         try:
-            mapFile = open(filePath, "r", encoding="utf-8")
-            return mapFile
+            map_file = open(file_path, "r", encoding="utf-8")
+            return map_file
         except OSError as error:
             print(f"{error}")
 
-    def generateJson(self) -> None:
+    def generate_json(self) -> None:
         """Used to generate a JSON file with map data."""
-        general = self.parseGeneral()
-        metadata = self.parseMetadata()
-        notes = self.parseNotes()
-        metadata["bpm"] = self.songBpm
-        metadata["difficulty"] = self.difficultyName
+        general = self.parse_general()
+        metadata = self.parse_metadata()
+        notes = self.parse_notes()
+        metadata["bpm"] = self.song_bpm
+        metadata["difficulty"] = self.difficulty_name
         metadata["rating"] = self.rating
-        fileName = f"{metadata['artist']} - {metadata['title']} [{metadata['difficulty']}].json"
+        file_name = f"{metadata['artist']} - {metadata['title']} [{metadata['difficulty']}].json"
         map_json = {"general": general, "metadata": metadata, "notes": notes}
         try:
-            with open(fileName, "w") as write_file:
+            with open(file_name, "w") as write_file:
                 json.dump(map_json, write_file)
         except FileExistsError as error:
             print("Unable to create file.")
             print(f"Caught {error}: error")
 
-    def parseGeneral(self) -> dict:
-        """Used to parse data from the general section of the osu file."""
+    def parse_general(self) -> dict:
+        """Used to parse data from the general section of the osu file.
+
+        Returns
+        ----------
+        dict
+            Dictionary with general data of the map.
+        """
         self.map.seek(0)
-        readfromhere = False
+        read_from_here = False
         lines = self.map.readlines()
         general = dict()
         for line in lines:
             if line == "[General]\n":
-                readfromhere = True
+                read_from_here = True
                 continue
-            if readfromhere:
+            if read_from_here:
                 if line == "\n":
-                    readfromhere = False
+                    read_from_here = False
                 data = line.split(":")
                 data = [data[0], data[-1].replace("\n", "")]
-                if data[0] == "AudioFilename":
+                if data[0] == "AudioFile_name":
                     general["audio"] = data[1].replace(" ", "")
                 data = line.split('"')
-        readfromhere = False
+        read_from_here = False
         for line in lines:
             if line == "//Background and Video events\n":
-                readfromhere = True
+                read_from_here = True
                 continue
-            if readfromhere:
+            if read_from_here:
                 data = line.split('"')
                 general["background"] = data[1].replace(" ", "")
                 break
         return general
 
-    def parseMetadata(self) -> dict:
-        """Used to parse data from the metadata section of the osu file."""
+    def parse_metadata(self) -> dict:
+        """Used to parse data from the metadata section of the osu file.
+
+        Returns
+        ----------
+        dict
+            Dictionary with metadata of the map.
+        """
         self.map.seek(0)
-        readfromhere = False
+        read_from_here = False
         lines = self.map.readlines()
         metadata = dict()
         for line in lines:
             if line == "[Metadata]\n":
-                readfromhere = True
+                read_from_here = True
                 continue
-            if readfromhere:
+            if read_from_here:
                 if line == "\n":
                     break
                 data = line.split(":")
@@ -127,43 +151,49 @@ class Converter:
                     metadata["mapper"] = data[1]
         return metadata
 
-    def parseNotes(self) -> dict:
-        """Used to parse data from the object section of the osu file."""
+    def parse_notes(self) -> dict:
+        """Used to parse data from the object section of the osu file.
+
+        Returns
+        ----------
+        dict
+            Dictionary with note timings and spawn positions.
+        """
         self.map.seek(0)
-        readfromhere = False
+        read_from_here = False
         lines = self.map.readlines()
         notes = dict()
         for line in lines:
             if line == "[HitObjects]\n":
-                readfromhere = True
+                read_from_here = True
                 continue
-            if readfromhere:
+            if read_from_here:
                 colomn = line.split(",")[:1:]
                 colomn = "".join(map(str, colomn))
                 timing = line.split(",")[2:3:]
                 timing = int("".join(map(str, timing)))
                 if timing not in notes:
-                    spawnPositions = "0000"
-                    spawnPositions = list(spawnPositions)
+                    spawn_positions = "0000"
+                    spawn_positions = list(spawn_positions)
                     if colomn == "64":
-                        spawnPositions[0] = "1"
+                        spawn_positions[0] = "1"
                     if colomn == "192":
-                        spawnPositions[1] = "1"
+                        spawn_positions[1] = "1"
                     if colomn == "320":
-                        spawnPositions[2] = "1"
+                        spawn_positions[2] = "1"
                     if colomn == "448":
-                        spawnPositions[3] = "1"
-                    spawnPositions = "".join(spawnPositions)
-                    notes[timing] = spawnPositions
+                        spawn_positions[3] = "1"
+                    spawn_positions = "".join(spawn_positions)
+                    notes[timing] = spawn_positions
                 else:
-                    spawnPositions = list(notes[timing])
+                    spawn_positions = list(notes[timing])
                     if colomn == "64":
-                        spawnPositions[0] = "1"
+                        spawn_positions[0] = "1"
                     if colomn == "192":
-                        spawnPositions[1] = "1"
+                        spawn_positions[1] = "1"
                     if colomn == "320":
-                        spawnPositions[2] = "1"
+                        spawn_positions[2] = "1"
                     if colomn == "448":
-                        spawnPositions[3] = "1"
-                    notes[timing] = "".join(spawnPositions)
+                        spawn_positions[3] = "1"
+                    notes[timing] = "".join(spawn_positions)
         return notes

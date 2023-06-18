@@ -1,8 +1,9 @@
 var searchData=
 [
-  ['length_0',['length',['../classmain_1_1_long_note.html#a8867377f12c3a23f8828dc005fae05e9',1,'main::LongNote']]],
-  ['line_1',['line',['../classmain_1_1_note.html#ad72999ef9abdc4b69fd5123145fc0f67',1,'main::Note']]],
-  ['loadresources_2',['loadResources',['../classmain_1_1_game.html#a5aa45efb074414a875accb67e40f950c',1,'main::Game']]],
-  ['longnote_3',['LongNote',['../classmain_1_1_long_note.html',1,'main']]],
-  ['lowestfps_4',['lowestFps',['../classmain_1_1_game.html#ae417ea1dfc9fa886e1011bdf27f2ab74',1,'main::Game']]]
+  ['lastgrade_0',['lastGrade',['../classmain_1_1_game.html#a38089dcc892e7561c192cc6937403321',1,'main.Game.lastGrade()'],['../classui_1_1_user_interface.html#aa5d22918f8ae0aeb68044480c890bf8e',1,'ui.UserInterface.lastGrade()']]],
+  ['leaderboard_1',['Leaderboard',['../classperformance_1_1_leaderboard.html',1,'performance']]],
+  ['line_2',['line',['../classgraphics_1_1_note.html#a84cc1206a716309e5d4ad4917f99afa2',1,'graphics::Note']]],
+  ['load_3',['load',['../classperformance_1_1_leaderboard.html#a12758ee36fa851a2ddfca6bebb949906',1,'performance.Leaderboard.load()'],['../classsettings_1_1_settings.html#aef95b33f90976ad0940e07afbe2e7024',1,'settings.Settings.load(self)']]],
+  ['load_5fdefault_5fsettings_4',['load_default_settings',['../classsettings_1_1_settings.html#aa3e6afde50cc9e7251c83e321263d88f',1,'settings::Settings']]],
+  ['load_5fresources_5',['load_resources',['../classmain_1_1_game.html#a88328da18645499d55904fca28436c40',1,'main::Game']]]
 ];

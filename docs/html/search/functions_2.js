@@ -1,9 +1,6 @@
 var searchData=
 [
-  ['draw_5ftext_0',['draw_Text',['../classmain_1_1_game.html#a56cba3f9af214f35fa934e5d74f2dd48',1,'main::Game']]],
-  ['drawbg_1',['drawBG',['../classmain_1_1_game.html#adbe6b51d6578f0d22fcf36471f09e64f',1,'main::Game']]],
-  ['drawjudgementbar_2',['drawJudgementBar',['../classmain_1_1_game.html#a5cbab737959dbffd446128416c2a917f',1,'main::Game']]],
-  ['drawnotes_3',['drawNotes',['../classmain_1_1_game.html#aa4a6cba5879ecab986f12aa51f3942e3',1,'main::Game']]],
-  ['drawrectangle_4',['drawRectangle',['../classmain_1_1_game.html#ae5f8ff9e2aa56e951595a27650378504',1,'main::Game']]],
-  ['drawtext_5',['drawText',['../classmain_1_1_game.html#a0a828c18c247b44e8daabb8a1cb9d9c1',1,'main::Game']]]
+  ['calculate_5fbackground_5falpha_0',['calculate_background_alpha',['../classsettings_1_1_settings.html#a43cc6bc2e689063f560cc5e0849b7e35',1,'settings::Settings']]],
+  ['calculate_5ftime_5fto_5freact_1',['calculate_time_to_react',['../classsettings_1_1_settings.html#a6fb68bbcc34917cb0665983038c8f063',1,'settings::Settings']]],
+  ['change_5fvolume_2',['change_volume',['../classaudioplayer_1_1_audio_player.html#adae50a861726b30f6fc6563c38e07dbd',1,'audioplayer::AudioPlayer']]]
 ];

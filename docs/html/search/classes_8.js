@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['note_0',['Note',['../classmain_1_1_note.html',1,'main']]]
+  ['main_0',['Main',['../classmenu_1_1_main.html',1,'menu']]],
+  ['menu_1',['Menu',['../classmenu_1_1_menu.html',1,'menu']]]
 ];

@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['changevolume_0',['changeVolume',['../classmain_1_1_audio_player.html#a8fa96dca5a00537690641579ae76268e',1,'main::AudioPlayer']]]
+  ['add_0',['add',['../classperformance_1_1_leaderboard.html#a80780daed68a182cccd479b8026a985b',1,'performance::Leaderboard']]],
+  ['add_5fscore_1',['add_score',['../classperformance_1_1_performance.html#a3db3fcf124ceb631d3adb62b5820b27e',1,'performance::Performance']]]
 ];

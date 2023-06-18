@@ -12,29 +12,29 @@ class AudioPlayer:
     -------
     on_execute(frequency=44100, size=16, channels=2, buffer=4096, volume=0.1)
         Used to set playback parameters and initialize the audio player.
-    changeVolume(songVolume)
+    change_volume(song_volume)
         Used to set the playback volume.
-    playSong()
+    play_song()
         Used for playing music.
     update()
         Used to update the playback timer.
     """
 
-    def __init__(self, songBpm: float, songSource: str) -> None:
+    def __init__(self, song_bpm: float, song_source: str) -> None:
         """
         Parameters
         ----------
-        songBpm : float
+        song_bpm : float
             BPM of the song to be played.
-        songSource : str
+        song_source : str
             Song file location.
         """
         self.mixer = mixer
         self.hitSound = self.mixer.Sound(os.path.join("src", "hitsounds", "hit.wav"))
-        self.songBpm = songBpm
+        self.song_bpm = song_bpm
         self.songPosition = 0
-        self.songSource = songSource
-        self.mixer.music.load(self.songSource)
+        self.song_source = song_source
+        self.mixer.music.load(self.song_source)
 
     def on_execute(self, frequency=44100, size=16, channels=2, buffer=4096, volume=0.1):
         """Used to set playback parameters and initialize the audio player.
@@ -58,25 +58,34 @@ class AudioPlayer:
             frequency=frequency, size=size, channels=channels, buffer=buffer
         )
         self.mixer.init()
-        self.changeVolume(volume)
+        self.change_volume(volume)
 
-    def changeVolume(self, songVolume: float):
+    def change_volume(self, song_volume: float):
         """Used to set the playback volume.
 
         Parameters
         ----------
-        songVolume : int
+        song_volume : int
             Playback volume.
+        Raises
+        ----------
+        AssertionError
+            The song volume is not float.
+        ValueError
+            The width or height value is less than zero.
         """
-        self.mixer.music.set_volume(songVolume)
+        assert isinstance(song_volume, float) or isinstance(
+            song_volume, int
+        ), "Song volume must be float or int (0 or 1)."
+        if song_volume < 0 or song_volume > 1:
+            raise ValueError(
+                "The volume of the song must be greater than zero and less than 1."
+            )
+        self.mixer.music.set_volume(song_volume)
 
-    def playSong(self):
+    def play_song(self):
         """Used for playing music."""
         self.mixer.music.play()
-
-    def reset_song_position(self):
-        self.mixer.music.unload()
-        self.mixer.music.load(self.songSource)
 
     def update(self):
         """Used to update the playback timer."""

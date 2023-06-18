@@ -1,7 +1,12 @@
 var searchData=
 [
-  ['parsegeneral_0',['parseGeneral',['../classconverter__from__osu__to__krs_1_1_converter.html#a6c6ac9211ae3b5df7bc9cb4b419ee081',1,'converter_from_osu_to_krs.Converter.parseGeneral()'],['../classmain_1_1_converter.html#a561a1b5c55a4a0f5168a282822b22451',1,'main.Converter.parseGeneral()']]],
-  ['parsemetadata_1',['parseMetadata',['../classconverter__from__osu__to__krs_1_1_converter.html#a6f58e19ffa749ee28eea594907765ce0',1,'converter_from_osu_to_krs.Converter.parseMetadata()'],['../classmain_1_1_converter.html#ad0cefff59cb7ae3b670d761f48f640b3',1,'main.Converter.parseMetadata()']]],
-  ['parsenotes_2',['parseNotes',['../classconverter__from__osu__to__krs_1_1_converter.html#aff55c841dd6bf360cdffb17e787a3e6a',1,'converter_from_osu_to_krs.Converter.parseNotes()'],['../classmain_1_1_converter.html#a0316d37b454c9d4122a7c786a67c85c7',1,'main.Converter.parseNotes()']]],
-  ['playsong_3',['playSong',['../classmain_1_1_audio_player.html#a56c047ccd1d045fd21c8f7eb04392cb5',1,'main::AudioPlayer']]]
+  ['handle_5fchart_5fselect_5fmenu_0',['handle_chart_select_menu',['../classmain_1_1_game.html#ad62b1c21b0dd240c89d008d938c8c8d5',1,'main::Game']]],
+  ['handle_5fdifficulty_5fselect_5fmenu_1',['handle_difficulty_select_menu',['../classmain_1_1_game.html#a352ca8873943ccd2f99b415c39b22fde',1,'main::Game']]],
+  ['handle_5fendscreen_2',['handle_endscreen',['../classmain_1_1_game.html#a632c853692d24a4e01a66c725c2c7dc5',1,'main::Game']]],
+  ['handle_5fgameplay_3',['handle_gameplay',['../classmain_1_1_game.html#ac29b097c72edf1c6a5c95695cf2a3f00',1,'main::Game']]],
+  ['handle_5fmain_5fmenu_4',['handle_main_menu',['../classmain_1_1_game.html#a24559112acf416739e2976d2c934755a',1,'main::Game']]],
+  ['handle_5fnote_5',['handle_note',['../classmain_1_1_game.html#a4fbeafec7a99afbeb3e1d95a337a4341',1,'main::Game']]],
+  ['handle_5fpause_5fmenu_6',['handle_pause_menu',['../classmain_1_1_game.html#a311501c48a5bdbee29745d985d821bca',1,'main::Game']]],
+  ['handle_5fsettings_5fmenu_7',['handle_settings_menu',['../classmain_1_1_game.html#a6765c86c30315513e19b04dc64b2e10a',1,'main::Game']]],
+  ['handle_5fusername_5finput_8',['handle_username_input',['../classmain_1_1_game.html#afd0703092684776cc1a929100d07d4f5',1,'main::Game']]]
 ];

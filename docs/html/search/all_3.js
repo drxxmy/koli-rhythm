@@ -1,9 +1,21 @@
 var searchData=
 [
-  ['changevolume_0',['changeVolume',['../classmain_1_1_audio_player.html#a8fa96dca5a00537690641579ae76268e',1,'main::AudioPlayer']]],
-  ['clock_1',['clock',['../classmain_1_1_game.html#a72f617c8a9c3f8387aaeff604c5a7770',1,'main::Game']]],
-  ['conv_2',['conv',['../namespaceconverter__from__osu__to__krs.html#a9a44e21c204b0b5802b5ec7feaf621db',1,'converter_from_osu_to_krs']]],
-  ['converter_3',['Converter',['../classconverter__from__osu__to__krs_1_1_converter.html',1,'converter_from_osu_to_krs.Converter'],['../classmain_1_1_converter.html',1,'main.Converter']]],
-  ['converter_5ffrom_5fosu_5fto_5fkrs_4',['converter_from_osu_to_krs',['../namespaceconverter__from__osu__to__krs.html',1,'']]],
-  ['converter_5ffrom_5fosu_5fto_5fkrs_2epy_5',['converter_from_osu_to_krs.py',['../converter__from__osu__to__krs_8py.html',1,'']]]
+  ['calculate_5fbackground_5falpha_0',['calculate_background_alpha',['../classsettings_1_1_settings.html#a43cc6bc2e689063f560cc5e0849b7e35',1,'settings::Settings']]],
+  ['calculate_5ftime_5fto_5freact_1',['calculate_time_to_react',['../classsettings_1_1_settings.html#a6fb68bbcc34917cb0665983038c8f063',1,'settings::Settings']]],
+  ['change_5fvolume_2',['change_volume',['../classaudioplayer_1_1_audio_player.html#adae50a861726b30f6fc6563c38e07dbd',1,'audioplayer::AudioPlayer']]],
+  ['chart_3',['chart',['../namespacechart.html',1,'']]],
+  ['chart_4',['Chart',['../classchart_1_1_chart.html',1,'chart']]],
+  ['chart_2epy_5',['chart.py',['../chart_8py.html',1,'']]],
+  ['chart_5fended_6',['chart_ended',['../classmain_1_1_game.html#a96560653d81b2a7fcef2a08ab4a4fbb1',1,'main::Game']]],
+  ['chart_5fselect_5fmenu_7',['CHART_SELECT_MENU',['../classenums_1_1_game_state.html#ad91bb4156333d41a72b597fe12872482',1,'enums::GameState']]],
+  ['charts_8',['charts',['../classmain_1_1_game.html#adfc3321b2da4363a029081eaf84eae92',1,'main::Game']]],
+  ['charts_9',['Charts',['../classmenu_1_1_charts.html',1,'menu']]],
+  ['charts_5fmenu_10',['charts_menu',['../classmain_1_1_game.html#ae47c27a44386e18bacf5c6de5de594f3',1,'main::Game']]],
+  ['clock_11',['clock',['../classmain_1_1_game.html#a72f617c8a9c3f8387aaeff604c5a7770',1,'main::Game']]],
+  ['color_12',['color',['../classgraphics_1_1_hit.html#a94b80e21219c30091cd523780ce9d252',1,'graphics::Hit']]],
+  ['color_13',['Color',['../classenums_1_1_color.html',1,'enums']]],
+  ['combo_14',['combo',['../classperformance_1_1_performance.html#a26d88ea0332436af33cd77cd732d7a18',1,'performance.Performance.combo()'],['../classui_1_1_user_interface.html#ae9371acd3521dfc2bf2a7c578bde7653',1,'ui.UserInterface.combo()']]],
+  ['converter_15',['converter',['../namespaceconverter.html',1,'']]],
+  ['converter_16',['Converter',['../classconverter_1_1_converter.html',1,'converter']]],
+  ['converter_2epy_17',['converter.py',['../converter_8py.html',1,'']]]
 ];

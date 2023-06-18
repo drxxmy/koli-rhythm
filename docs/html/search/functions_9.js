@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['searchjson_0',['searchJson',['../classmain_1_1_map.html#a1df7fc3787e3f0abfa54f1ed086fba73',1,'main::Map']]],
-  ['spawnnotes_1',['spawnNotes',['../classmain_1_1_game.html#aed4213aba798dab8a78e370d66a18392',1,'main::Game']]]
+  ['load_0',['load',['../classperformance_1_1_leaderboard.html#a12758ee36fa851a2ddfca6bebb949906',1,'performance.Leaderboard.load()'],['../classsettings_1_1_settings.html#aef95b33f90976ad0940e07afbe2e7024',1,'settings.Settings.load(self)']]],
+  ['load_5fdefault_5fsettings_1',['load_default_settings',['../classsettings_1_1_settings.html#aa3e6afde50cc9e7251c83e321263d88f',1,'settings::Settings']]],
+  ['load_5fresources_2',['load_resources',['../classmain_1_1_game.html#a88328da18645499d55904fca28436c40',1,'main::Game']]]
 ];

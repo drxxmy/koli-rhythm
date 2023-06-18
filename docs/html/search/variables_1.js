@@ -1,7 +1,8 @@
 var searchData=
 [
-  ['all_5fnotes_0',['all_notes',['../classmain_1_1_game.html#aa8829249567f864b51967e6e8caca3ac',1,'main::Game']]],
-  ['artist_1',['artist',['../classmain_1_1_map.html#affa7db094ecbd310424f5a49be28165e',1,'main::Map']]],
-  ['audio_2',['audio',['../classmain_1_1_map.html#a39b65c8e36cb35a102b20462c046838c',1,'main::Map']]],
-  ['audioplayer_3',['audioPlayer',['../classmain_1_1_game.html#a56922c991ec32e8ffe04774a4b3b7cc6',1,'main::Game']]]
+  ['accuracy_0',['accuracy',['../classperformance_1_1_performance.html#ae45f7da3fd9b69fd1daea56790995619',1,'performance.Performance.accuracy()'],['../classui_1_1_user_interface.html#a33ec2d3f3829d200df0c95b186e80e6e',1,'ui.UserInterface.accuracy()']]],
+  ['all_5frecent_5fhits_1',['all_recent_hits',['../classmain_1_1_game.html#a9d227ec85b2f0a270f79491869573e3e',1,'main::Game']]],
+  ['artist_2',['artist',['../classchart_1_1_difficulty.html#a3c2378d748f6ef6a3b575703238860b2',1,'chart.Difficulty.artist()'],['../classchart_1_1_chart.html#aeb4df51b75f9c3d3528234ae432c2624',1,'chart.Chart.artist()']]],
+  ['audio_3',['audio',['../classchart_1_1_difficulty.html#a34bde01567d8490c7d82b8216a028d1b',1,'chart.Difficulty.audio()'],['../classchart_1_1_chart.html#ab850dbe69b62322ee080ad72f257521b',1,'chart.Chart.audio()']]],
+  ['audioplayer_4',['audioPlayer',['../classmain_1_1_game.html#a56922c991ec32e8ffe04774a4b3b7cc6',1,'main::Game']]]
 ];

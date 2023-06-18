@@ -1,7 +1,13 @@
 var searchData=
 [
-  ['thirdnote_0',['thirdNote',['../classmain_1_1_game.html#a5e3be171ee7dd54bbbb084618d5d35de',1,'main::Game']]],
-  ['timetoreact_1',['timeToReact',['../classmain_1_1_game.html#abda68c92b97b2387a3bd72678231091b',1,'main::Game']]],
-  ['timing_2',['timing',['../classmain_1_1_note.html#a5e4841a19286e47fdebc396b061f3ce8',1,'main::Note']]],
-  ['title_3',['title',['../classmain_1_1_map.html#a51514e4a0345bb19dde2261d010997cd',1,'main::Map']]]
+  ['text_0',['text',['../namespacetext.html',1,'text'],['../classtext_1_1_text.html#ae0b822187a2626b2d24b11f61abab832',1,'text.Text.text()'],['../classtext_1_1_text_with_shadow.html#a4428fff12bd36d4c5f76d65febe1cf1b',1,'text.TextWithShadow.text()']]],
+  ['text_1',['Text',['../classtext_1_1_text.html',1,'text']]],
+  ['text_2epy_2',['text.py',['../text_8py.html',1,'']]],
+  ['text_5fcol_3',['text_col',['../classtext_1_1_text.html#a66604e78a07aed9afe10ab1570267a81',1,'text.Text.text_col()'],['../classtext_1_1_text_with_shadow.html#a2649f1de2737b8ad4692ae77e854d03e',1,'text.TextWithShadow.text_col()']]],
+  ['text_5fsurf_4',['text_surf',['../classtext_1_1_text.html#a05d7db74d25cb188eae5bc8b6291d78e',1,'text.Text.text_surf()'],['../classtext_1_1_text_with_shadow.html#abf805ceaf92f18b57e7c64a8d6e1543b',1,'text.TextWithShadow.text_surf()']]],
+  ['textwithshadow_5',['TextWithShadow',['../classtext_1_1_text_with_shadow.html',1,'text']]],
+  ['time_6',['time',['../classgraphics_1_1_hit.html#afc67a6db1e6a12b64d148fc6ce97094a',1,'graphics::Hit']]],
+  ['time_5fto_5freact_7',['time_to_react',['../classsettings_1_1_settings.html#a884b60fcb1754b9ba2ca28d3e4237a10',1,'settings::Settings']]],
+  ['timing_8',['timing',['../classgraphics_1_1_note.html#abac2d5eafee8959d38093b3e8d5602cf',1,'graphics::Note']]],
+  ['title_9',['title',['../classchart_1_1_difficulty.html#a7260c7980cf87d6ef530f353085192e0',1,'chart.Difficulty.title()'],['../classchart_1_1_chart.html#a82aaf24fa548afbbae67b3bd571dfd1c',1,'chart.Chart.title()']]]
 ];
